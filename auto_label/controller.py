@@ -1,5 +1,6 @@
 import os
 import threading
+import json
 from pathlib import Path
 
 from PyQt5 import uic
@@ -11,8 +12,7 @@ from .config import VALID_EXTS, LOG_EVERY_N, MAX_THREADS_CAP
 from .signals import Signals
 from .tasks import ResizeTask
 from .augment import AugmentTask
-from .convert import ConvertRunner   # ★ 신규
-
+from .convert import ConvertRunner
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -112,6 +112,11 @@ class MainWindow(QWidget):
         self.textCvLog.setReadOnly(True)
         self.textCvLog.setPlaceholderText("변환 로그가 표시됩니다...")
 
+        # 기본 변환 해상도 1280x720 셋업
+        self.spinCvW.setValue(1280)
+        self.spinCvH.setValue(720)
+        self.doubleSpinValRatio.setValue(0.20)
+
     # ----------------- 공용 -----------------
     def _append_log(self, text_edit, text: str):
         text_edit.append(text)
@@ -142,7 +147,6 @@ class MainWindow(QWidget):
             return
 
         self.stop_event.clear()
-
         files = []
         for name in os.listdir(self.directory):
             in_path = os.path.join(self.directory, name)
@@ -337,7 +341,6 @@ class MainWindow(QWidget):
         self.btnCvRun.setEnabled(bool(self.cv_img_dir and self.cv_json_dir and self.cv_out_dir))
 
     def _estimate_cv_total(self) -> int:
-        """대략적인 총 건수(이미지 수)를 미리 계산해 진행률 초기화에 사용."""
         if not self.cv_json_dir:
             return 0
         jsondir = Path(self.cv_json_dir)
@@ -353,7 +356,6 @@ class MainWindow(QWidget):
                 pass
         if coco_obj:
             return len(coco_obj.get("images", []))
-        # LabelMe 추정(= json 파일 수)
         return len(list(jsondir.glob("*.json")))
 
     def _run_cv(self):
@@ -368,20 +370,23 @@ class MainWindow(QWidget):
         imgdir = Path(self.cv_img_dir).resolve()
         jsondir = Path(self.cv_json_dir).resolve()
         outdir = Path(self.cv_out_dir).resolve()
-        size = int(self.spinCvSize.value())
+        out_w = int(self.spinCvW.value())
+        out_h = int(self.spinCvH.value())
         val_ratio = float(self.doubleSpinValRatio.value())
 
         # 진행률 총합(대략)
         self.cv_total = max(1, self._estimate_cv_total())
         self.cv_done = self.cv_success = self.cv_failed = 0
 
-        self._append_log(self.textCvLog,
-                         f"변환 시작: size={size}, val_ratio={val_ratio} → 예상 총 {self.cv_total} 샘플")
+        self._append_log(
+            self.textCvLog,
+            f"변환 시작: size=({out_w},{out_h}), val_ratio={val_ratio} → 예상 총 {self.cv_total} 샘플"
+        )
         self._toggle_cv_ui(True)
 
         runner = ConvertRunner(
             imgdir=imgdir, jsondir=jsondir, out_root=outdir,
-            size=size, val_ratio=val_ratio,
+            size=(out_w, out_h), val_ratio=val_ratio,
             signals=self.cv_signals, stop_event=self.cv_stop_event
         )
         self.pool.start(runner)

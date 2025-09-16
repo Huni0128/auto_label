@@ -88,8 +88,9 @@
 
        <item>
         <layout class="QHBoxLayout" name="cvControls">
-         <item><widget class="QLabel" name="labelCvSize"><property name="text"><string>사이즈</string></property></widget></item>
-         <item><widget class="QSpinBox" name="spinCvSize"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="value"><number>640</number></property><property name="singleStep"><number>32</number></property></widget></item>
+         <item><widget class="QLabel" name="labelCvSize"><property name="text"><string>사이즈 (W×H)</string></property></widget></item>
+         <item><widget class="QSpinBox" name="spinCvW"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="value"><number>1280</number></property><property name="singleStep"><number>32</number></property></widget></item>
+         <item><widget class="QSpinBox" name="spinCvH"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="value"><number>720</number></property><property name="singleStep"><number>16</number></property></widget></item>
          <item><widget class="QLabel" name="labelValRatio"><property name="text"><string>Val 비율</string></property></widget></item>
          <item><widget class="QDoubleSpinBox" name="doubleSpinValRatio"><property name="decimals"><number>2</number></property><property name="minimum"><double>0.00</double></property><property name="maximum"><double>1.00</double></property><property name="singleStep"><double>0.05</double></property><property name="value"><double>0.20</double></property></widget></item>
          <item><widget class="QPushButton" name="btnCvRun"><property name="text"><string>변환 실행</string></property></widget></item>
