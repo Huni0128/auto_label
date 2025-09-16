@@ -4,6 +4,7 @@
 # 텍스트 파일
 *.txt
 *.json
+*.cache
 
 # 이미지 파일
 *.jpg
@@ -14,3 +15,5 @@
 *.tiff
 *.svg
 *.webp
+
+runs/

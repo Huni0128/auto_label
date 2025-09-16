@@ -13,6 +13,7 @@ from .signals import Signals
 from .tasks import ResizeTask
 from .augment import AugmentTask
 from .convert import ConvertRunner
+from .training import TrainRunner
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -25,8 +26,8 @@ class MainWindow(QWidget):
         # ========= 공통 상태 =========
         self.pool = QThreadPool.globalInstance()
         self.pool.setMaxThreadCount(min(MAX_THREADS_CAP, os.cpu_count() or 4))
-        self.setWindowTitle("이미지 툴킷 - 리사이즈 & LabelMe 증강 & YOLO 변환")
-        self.resize(960, 680)
+        self.setWindowTitle("이미지 툴킷 - 리사이즈 & LabelMe 증강 & YOLO 변환/학습")
+        self.resize(1000, 720)
 
         # ========= 리사이즈 탭 =========
         self.directory = None
@@ -112,10 +113,40 @@ class MainWindow(QWidget):
         self.textCvLog.setReadOnly(True)
         self.textCvLog.setPlaceholderText("변환 로그가 표시됩니다...")
 
-        # 기본 변환 해상도 1280x720 셋업
-        self.spinCvW.setValue(1280)
-        self.spinCvH.setValue(720)
-        self.doubleSpinValRatio.setValue(0.20)
+        # 기본 변환 해상도 1280x720
+        if hasattr(self, "spinCvW"): self.spinCvW.setValue(1280)
+        if hasattr(self, "spinCvH"): self.spinCvH.setValue(720)
+        if hasattr(self, "doubleSpinValRatio"): self.doubleSpinValRatio.setValue(0.20)
+
+        # ========= YOLO 학습 탭 =========
+        self.train_model_path = None
+        self.train_data_path = None
+        self.train_stop_event = threading.Event()
+        self.train_signals = Signals()
+        self.train_signals.one_done.connect(self._on_train_log)
+        self.train_signals.all_done.connect(self._on_train_done)
+
+        self.labelTrainPaths.setText("모델(.pt)과 dataset.yaml을 선택하세요")
+
+        self.btnTrainModel.clicked.connect(self._train_select_model)
+        self.btnTrainData.clicked.connect(self._train_select_data)
+        self.btnTrainStart.clicked.connect(self._run_train)
+        self.btnTrainStop.clicked.connect(self._stop_train)
+        self.btnTrainStart.setEnabled(False)
+        self.btnTrainStop.setEnabled(False)
+
+        # 기본값: yolo11n-seg.pt, imgsz=1280, epochs=100, batch auto
+        if hasattr(self, "spinTrainW"): self.spinTrainW.setValue(1280)
+        if hasattr(self, "spinTrainH"): self.spinTrainH.setValue(720)
+        if hasattr(self, "spinTrainEpochs"): self.spinTrainEpochs.setValue(100)
+        if hasattr(self, "spinTrainBatch"): self.spinTrainBatch.setValue(16)
+        if hasattr(self, "chkTrainBatchAuto"):
+            self.chkTrainBatchAuto.setChecked(True)
+            self.spinTrainBatch.setEnabled(False)
+            self.chkTrainBatchAuto.stateChanged.connect(self._on_batch_auto_toggle)
+
+        self.textTrainLog.setReadOnly(True)
+        self.textTrainLog.setPlaceholderText("학습 로그가 표시됩니다...")
 
     # ----------------- 공용 -----------------
     def _append_log(self, text_edit, text: str):
@@ -344,7 +375,6 @@ class MainWindow(QWidget):
         if not self.cv_json_dir:
             return 0
         jsondir = Path(self.cv_json_dir)
-        # COCO 탐지
         coco_obj = None
         for p in jsondir.glob("*.json"):
             try:
@@ -374,7 +404,6 @@ class MainWindow(QWidget):
         out_h = int(self.spinCvH.value())
         val_ratio = float(self.doubleSpinValRatio.value())
 
-        # 진행률 총합(대략)
         self.cv_total = max(1, self._estimate_cv_total())
         self.cv_done = self.cv_success = self.cv_failed = 0
 
@@ -423,3 +452,94 @@ class MainWindow(QWidget):
         else:
             QMessageBox.warning(self, "변환 완료(일부 실패)",
                                 f"성공 {self.cv_success}, 실패 {self.cv_failed}. 로그를 확인하세요.")
+
+    # ----------------- YOLO 학습 -----------------
+    def _on_batch_auto_toggle(self, state):
+        is_auto = self.chkTrainBatchAuto.isChecked()
+        if hasattr(self, "spinTrainBatch"):
+            self.spinTrainBatch.setEnabled(not is_auto)
+
+    def _toggle_train_ui(self, running: bool):
+        self.btnTrainModel.setEnabled(not running)
+        self.btnTrainData.setEnabled(not running)
+
+        can_start = (not running) and bool(self.train_model_path) and bool(self.train_data_path)
+        self.btnTrainStart.setEnabled(can_start)
+
+        self.btnTrainStop.setEnabled(running)
+
+        # 입력 컨트롤들 on/off
+        if hasattr(self, "spinTrainW"): self.spinTrainW.setEnabled(not running)
+        if hasattr(self, "spinTrainH"): self.spinTrainH.setEnabled(not running)
+        if hasattr(self, "spinTrainEpochs"): self.spinTrainEpochs.setEnabled(not running)
+        if hasattr(self, "chkTrainBatchAuto"): self.chkTrainBatchAuto.setEnabled(not running)
+        if hasattr(self, "spinTrainBatch"):
+            self.spinTrainBatch.setEnabled((not running) and (not self.chkTrainBatchAuto.isChecked()))
+
+
+    def _train_select_model(self):
+        f, _ = QFileDialog.getOpenFileName(self, "모델(.pt) 선택", "", "PyTorch Model (*.pt);;All Files (*)")
+        if not f: return
+        self.train_model_path = f
+        self._update_train_paths_label()
+
+    def _train_select_data(self):
+        f, _ = QFileDialog.getOpenFileName(self, "dataset.yaml 선택", "", "YAML (*.yaml);;All Files (*)")
+        if not f: return
+        self.train_data_path = f
+        self._update_train_paths_label()
+
+    def _update_train_paths_label(self):
+        model_txt = self.train_model_path or "(모델 미선택)"
+        data_txt = self.train_data_path or "(dataset.yaml 미선택)"
+        self.labelTrainPaths.setText(f"모델: {model_txt}\n데이터셋: {data_txt}")
+        self.btnTrainStart.setEnabled(bool(self.train_model_path and self.train_data_path))
+
+    def _run_train(self):
+        if not (self.train_model_path and self.train_data_path):
+            QMessageBox.warning(self, "경고", "모델(.pt)과 dataset.yaml을 선택하세요.")
+            return
+
+        self.train_stop_event.clear()
+        self.textTrainLog.clear()
+
+        imgsz_w = int(self.spinTrainW.value())
+        imgsz_h = int(self.spinTrainH.value())
+        epochs = int(self.spinTrainEpochs.value())
+
+        batch = -1 if self.chkTrainBatchAuto.isChecked() else int(self.spinTrainBatch.value())
+
+        workdir = Path(self.train_data_path).resolve().parent
+
+        self._append_log(
+            self.textTrainLog,
+            f"학습 시작: model={self.train_model_path}, data={self.train_data_path}, imgsz=({imgsz_w}x{imgsz_h}), epochs={epochs}, batch={batch}"
+        )
+        self._toggle_train_ui(True)
+
+        runner = TrainRunner(
+            model_path=Path(self.train_model_path),
+            data_yaml=Path(self.train_data_path),
+            imgsz_w=imgsz_w,
+            imgsz_h=imgsz_h,
+            epochs=epochs,
+            batch=batch,
+            workdir=workdir,
+            signals=self.train_signals,
+            stop_event=self.train_stop_event,
+        )
+        self.pool.start(runner)
+
+    def _stop_train(self):
+        if not self.btnTrainStop.isEnabled(): return
+        self.train_stop_event.set()
+        self._append_log(self.textTrainLog, "학습 중지 요청을 보냈습니다...")
+
+    def _on_train_log(self, ok: bool, msg: str):
+        self._append_log(self.textTrainLog, msg)
+
+    def _on_train_done(self):
+        self._toggle_train_ui(False)
+        self._append_log(self.textTrainLog, "학습 종료.")
+        if self.train_stop_event.is_set():
+            QMessageBox.information(self, "학습 중지됨", "사용자 요청으로 학습이 중지되었습니다.")
