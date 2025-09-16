@@ -1,1 +1,15 @@
+# 실행 파일
 *.exe
+
+# 텍스트 파일
+*.txt
+
+# 이미지 파일
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.svg
+*.webp
