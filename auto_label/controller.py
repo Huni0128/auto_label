@@ -14,6 +14,7 @@ from .tasks import ResizeTask
 from .augment import AugmentTask
 from .convert import ConvertRunner
 from .training import TrainRunner
+from .auto_labeler import AutoLabelRunner
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -148,6 +149,41 @@ class MainWindow(QWidget):
         self.textTrainLog.setReadOnly(True)
         self.textTrainLog.setPlaceholderText("학습 로그가 표시됩니다...")
 
+        # ========= 오토 라벨 탭 =========
+        self.al_model_path = None
+        self.al_img_dir = None
+        self.al_save_dir = None
+        self.al_stop_event = threading.Event()
+        self.al_signals = Signals()
+        self.al_signals.one_done.connect(self._on_al_one_done)
+        self.al_signals.all_done.connect(self._on_al_all_done)
+
+        self.labelALPaths.setText("모델(.pt), 이미지 폴더, 저장 폴더를 선택하세요")
+
+        self.btnALModel.clicked.connect(self._al_select_model)
+        self.btnALImg.clicked.connect(self._al_select_img_dir)
+        self.btnALSave.clicked.connect(self._al_select_save_dir)
+        self.btnALRun.clicked.connect(self._run_al)
+        self.btnALStop.clicked.connect(self._stop_al)
+        self.btnALRun.setEnabled(False)
+        self.btnALStop.setEnabled(False)
+
+        # ★ ultra 전용: 의미 있는 컨트롤만 남김
+        self.spinALW.setValue(1280)
+        self.spinALH.setValue(720)
+        self.doubleALConf.setValue(0.25)
+        self.doubleALIou.setValue(0.45)
+        self.doubleALApprox.setValue(0.0)
+        self.doubleALMinArea.setValue(50.0)
+        self.chkALViz.setChecked(False)
+        self.chkALCopy.setChecked(False)
+        self.comboALCopyMode.addItems(["copy", "hardlink", "symlink", "move"])
+        self.comboALCopyMode.setCurrentText("copy")
+        self.lineALDevice.setText("")  # 빈 문자열이면 자동
+        self.progressAL.setValue(0)
+        self.textALLog.setReadOnly(True)
+        self.textALLog.setPlaceholderText("오토 라벨 로그가 표시됩니다...")
+        
     # ----------------- 공용 -----------------
     def _append_log(self, text_edit, text: str):
         text_edit.append(text)
@@ -543,3 +579,127 @@ class MainWindow(QWidget):
         self._append_log(self.textTrainLog, "학습 종료.")
         if self.train_stop_event.is_set():
             QMessageBox.information(self, "학습 중지됨", "사용자 요청으로 학습이 중지되었습니다.")
+
+    # ----------------- 오토 라벨 탭 -----------------
+    def _al_update_paths_label(self):
+        model_txt = self.al_model_path or "(모델 미선택)"
+        img_txt = self.al_img_dir or "(이미지 폴더 미선택)"
+        save_txt = self.al_save_dir or "(저장 폴더 미선택)"
+        self.labelALPaths.setText(f"모델: {model_txt}\n이미지: {img_txt}\n저장: {save_txt}")
+        can_run = bool(self.al_model_path and self.al_img_dir and self.al_save_dir)
+        self.btnALRun.setEnabled(can_run and (not self.btnALStop.isEnabled()))
+
+    def _al_select_model(self):
+        f, _ = QFileDialog.getOpenFileName(self, "모델(.pt) 선택", "", "PyTorch Model (*.pt);;All Files (*)")
+        if not f:
+            return
+        self.al_model_path = f
+        self._al_update_paths_label()
+
+    def _al_select_img_dir(self):
+        d = QFileDialog.getExistingDirectory(self, "이미지 폴더 선택")
+        if not d:
+            return
+        self.al_img_dir = d
+        self._al_update_paths_label()
+
+    def _al_select_save_dir(self):
+        d = QFileDialog.getExistingDirectory(self, "저장 폴더 선택 (bin 하위로 저장)")
+        if not d:
+            return
+        self.al_save_dir = d
+        self._al_update_paths_label()
+
+    def _toggle_al_ui(self, running: bool):
+        self.btnALModel.setEnabled(not running)
+        self.btnALImg.setEnabled(not running)
+        self.btnALSave.setEnabled(not running)
+        self.btnALRun.setEnabled((not running) and bool(self.al_model_path and self.al_img_dir and self.al_save_dir))
+        self.btnALStop.setEnabled(running)
+        for w in [
+            getattr(self, "spinALW", None), getattr(self, "spinALH", None),
+            getattr(self, "doubleALConf", None), getattr(self, "doubleALIou", None),
+            getattr(self, "doubleALApprox", None), getattr(self, "doubleALMinArea", None),
+            getattr(self, "chkALViz", None), getattr(self, "chkALCopy", None),
+            getattr(self, "comboALCopyMode", None), getattr(self, "lineALDevice", None),
+        ]:
+            if w:
+                w.setEnabled(not running)
+
+    def _estimate_al_total(self) -> int:
+        if not self.al_img_dir:
+            return 0
+        count = 0
+        for p in Path(self.al_img_dir).rglob("*"):
+            if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}:
+                count += 1
+        return count
+
+    def _run_al(self):
+        if not (self.al_model_path and self.al_img_dir and self.al_save_dir):
+            QMessageBox.warning(self, "경고", "모델/이미지/저장 폴더를 모두 선택하세요.")
+            return
+
+        self.al_stop_event.clear()
+        self.textALLog.clear()
+        self.progressAL.setValue(0)
+
+        imgsz_w = int(self.spinALW.value())
+        imgsz_h = int(self.spinALH.value())
+        conf = float(self.doubleALConf.value())
+        iou = float(self.doubleALIou.value())
+        approx = float(self.doubleALApprox.value())
+        min_area = float(self.doubleALMinArea.value())
+        viz = bool(self.chkALViz.isChecked())
+        copy_img = bool(self.chkALCopy.isChecked())
+        copy_mode = self.comboALCopyMode.currentText()
+        device = self.lineALDevice.text().strip() or None
+
+        self.al_total = max(1, self._estimate_al_total())
+        self.al_done = 0
+
+        self._append_log(
+            self.textALLog,
+            f"오토 라벨 시작 (ultra): imgsz=({imgsz_w}x{imgsz_h}), conf={conf}, iou={iou}, approx-eps={approx}, min-area={min_area}, viz={viz}, copy_img={copy_img}({copy_mode}), device={device or 'auto'}  → 예상 {self.al_total}장"
+        )
+        self._toggle_al_ui(True)
+
+        runner = AutoLabelRunner(
+            model_path=Path(self.al_model_path),
+            img_root=Path(self.al_img_dir),
+            save_root=Path(self.al_save_dir),
+            conf=conf,
+            iou=iou,
+            imgsz_w=imgsz_w,
+            imgsz_h=imgsz_h,
+            device=device,
+            approx_eps=approx,
+            min_area=min_area,
+            viz=viz,
+            copy_img=copy_img,
+            copy_mode=copy_mode,
+            signals=self.al_signals,
+            stop_event=self.al_stop_event,
+        )
+        self.pool.start(runner)
+
+    def _stop_al(self):
+        if not self.btnALStop.isEnabled():
+            return
+        self.al_stop_event.set()
+        self._append_log(self.textALLog, "오토 라벨 중지 요청을 보냈습니다... (진행 중인 항목은 마무리 후 종료)")
+
+    def _on_al_one_done(self, ok: bool, msg: str):
+        self.al_done += 1
+        self._append_log(self.textALLog, msg)
+        pct = int(self.al_done * 100 / self.al_total) if getattr(self, "al_total", 0) else 100
+        self.progressAL.setValue(pct)
+
+    def _on_al_all_done(self):
+        self._toggle_al_ui(False)
+        self.progressAL.setValue(100)
+        self._append_log(self.textALLog, f"오토 라벨 종료. 처리 {self.al_done}/{getattr(self, 'al_total', self.al_done)}")
+        if self.al_stop_event.is_set():
+            QMessageBox.information(self, "오토 라벨 중지됨", "사용자 요청으로 중지되었습니다.")
+        else:
+            QMessageBox.information(self, "오토 라벨 완료", "라벨 생성이 완료되었습니다.")
