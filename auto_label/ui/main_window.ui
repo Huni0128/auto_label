@@ -1,82 +1,142 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ImageResizerWindow</class>
- <widget class="QWidget" name="ImageResizerWindow">
+ <class>ImageToolsWindow</class>
+ <widget class="QWidget" name="ImageToolsWindow">
   <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>760</width>
-    <height>560</height>
-   </rect>
+   <rect><x>0</x><y>0</y><width>860</width><height>640</height></rect>
   </property>
   <property name="windowTitle">
-   <string>이미지 해상도 변환기 (1280x720) - 병렬/로그/진행률</string>
+   <string>이미지 툴킷 - 리사이즈 &amp; LabelMe 증강</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+
+  <layout class="QVBoxLayout" name="rootLayout">
    <item>
-    <widget class="QLabel" name="labelPath">
-     <property name="text">
-      <string>디렉토리를 선택하세요</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeft|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="buttonLayout">
-     <item>
-      <widget class="QPushButton" name="btnSelect">
-       <property name="text">
-        <string>디렉토리 선택</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnRun">
-       <property name="text">
-        <string>변환 실행(병렬)</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btnStop">
-       <property name="text">
-        <string>중지</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="QProgressBar" name="progressBar">
-     <property name="value">
-      <number>0</number>
-     </property>
-     <property name="format">
-      <string>%p%</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="threadLabel">
-     <property name="text">
-      <string>스레드: -</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignVCenter</set>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QTextEdit" name="textLog">
-     <property name="readOnly">
-      <bool>true</bool>
-     </property>
-     <property name="placeholderText">
-      <string>변환 로그가 표시됩니다...</string>
-     </property>
+    <widget class="QTabWidget" name="tabWidget">
+     <!-- ===== Tab 1: Resize ===== -->
+     <widget class="QWidget" name="tabResize">
+      <attribute name="title"><string>리사이즈</string></attribute>
+      <layout class="QVBoxLayout" name="resizeLayout">
+       <item>
+        <widget class="QLabel" name="labelPath">
+         <property name="text"><string>디렉토리를 선택하세요</string></property>
+         <property name="alignment"><set>Qt::AlignLeft|Qt::AlignVCenter</set></property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="buttonLayout">
+         <item>
+          <widget class="QPushButton" name="btnSelect">
+           <property name="text"><string>디렉토리 선택</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnRun">
+           <property name="text"><string>변환 실행(병렬)</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnStop">
+           <property name="text"><string>중지</string></property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QProgressBar" name="progressBar">
+         <property name="value"><number>0</number></property>
+         <property name="format"><string>%p%</string></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="threadLabel">
+         <property name="text"><string>스레드: -</string></property>
+         <property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextEdit" name="textLog">
+         <property name="readOnly"><bool>true</bool></property>
+         <property name="placeholderText"><string>변환 로그가 표시됩니다...</string></property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+
+     <!-- ===== Tab 2: Augment ===== -->
+     <widget class="QWidget" name="tabAugment">
+      <attribute name="title"><string>LabelMe 증강</string></attribute>
+      <layout class="QVBoxLayout" name="augmentLayout">
+       <item>
+        <widget class="QLabel" name="labelAugPaths">
+         <property name="text"><string>입력/출력 폴더를 선택하세요</string></property>
+         <property name="alignment"><set>Qt::AlignLeft|Qt::AlignVCenter</set></property>
+        </widget>
+       </item>
+
+       <item>
+        <layout class="QHBoxLayout" name="augPathBtns">
+         <item>
+          <widget class="QPushButton" name="btnAugIn">
+           <property name="text"><string>입력 폴더 선택</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAugOut">
+           <property name="text"><string>출력 폴더 선택</string></property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+
+       <item>
+        <layout class="QHBoxLayout" name="augControls">
+         <item>
+          <widget class="QLabel" name="labelMultiplier">
+           <property name="text"><string>Multiplier</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinMultiplier">
+           <property name="minimum"><number>1</number></property>
+           <property name="maximum"><number>100</number></property>
+           <property name="value"><number>5</number></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAugRun">
+           <property name="text"><string>증강 실행(병렬)</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAugStop">
+           <property name="text"><string>중지</string></property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+
+       <item>
+        <widget class="QProgressBar" name="progressAug">
+         <property name="value"><number>0</number></property>
+         <property name="format"><string>%p%</string></property>
+        </widget>
+       </item>
+
+       <item>
+        <widget class="QLabel" name="threadLabelAug">
+         <property name="text"><string>스레드: -</string></property>
+         <property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property>
+        </widget>
+       </item>
+
+       <item>
+        <widget class="QTextEdit" name="textAugLog">
+         <property name="readOnly"><bool>true</bool></property>
+         <property name="placeholderText"><string>증강 로그가 표시됩니다...</string></property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
   </layout>
