@@ -12,15 +12,20 @@ from PyQt5.QtCore import QRunnable
 
 from .signals import Signals
 
+# ===== 출력 해상도(검증 영상과 일치) =====
+TARGET_W = 1280
+TARGET_H = 720
+
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
 
 
-# ===== Albumentations 파이프라인 (원본 스크립트와 동일하게 커스터마이즈 가능) =====
+# ===== Albumentations 파이프라인 =====
+# - 최종 해상도를 1280x720으로 고정 (검증 영상과 동일)
 def build_transforms():
     return A.Compose(
         [
             A.HorizontalFlip(p=0.5),
-            A.VerticalFlip(p=0.1),
+            A.VerticalFlip(p=0.0),
             A.ShiftScaleRotate(
                 shift_limit=0.05, scale_limit=0.2, rotate_limit=20,
                 border_mode=cv2.BORDER_CONSTANT, value=0, p=0.9
@@ -28,11 +33,15 @@ def build_transforms():
             A.RandomBrightnessContrast(p=0.5),
             A.HueSaturationValue(p=0.3),
             A.GaussianBlur(blur_limit=(3, 5), p=0.15),
-            # 해상도 고정
-            A.Resize(480, 640, p=1.0),
+            # 1280x720 고정 (가로 1280, 세로 720). 필요 시 PadIfNeeded로 비율 유지+패딩 방식으로 변경 가능.
+            A.Resize(TARGET_H, TARGET_W, interpolation=cv2.INTER_AREA, p=1.0),
         ],
         keypoint_params=A.KeypointParams(format="xy", remove_invisible=False),
     )
+
+# (참고) 비율 유지 + 패딩으로 1280x720 맞추려면 아래처럼 교체:
+# A.LongestMaxSize(max_size=TARGET_W, interpolation=cv2.INTER_AREA, p=1.0),
+# A.PadIfNeeded(min_height=TARGET_H, min_width=TARGET_W, border_mode=cv2.BORDER_CONSTANT, value=0, p=1.0),
 
 
 # ===== 유틸 =====
@@ -143,8 +152,6 @@ class AugmentTask(QRunnable):
                 self.signals.one_done.emit(False, f"[FAIL] 이미지 로드 실패: {self.json_path.name}")
                 return
 
-            h, w = image.shape[:2]
-
             # polygon 수집
             shapes = j.get("shapes", [])
             poly_indices = []
@@ -216,8 +223,8 @@ class AugmentTask(QRunnable):
 
                 new_j = deepcopy(j)
                 new_j["imagePath"] = out_img_name
-                new_j["imageWidth"] = int(W)
-                new_j["imageHeight"] = int(H)
+                new_j["imageWidth"] = int(W)   # = 1280
+                new_j["imageHeight"] = int(H)  # = 720
                 new_j["imageData"] = None  # 용량 절감
                 new_j["shapes"] = new_shapes
 

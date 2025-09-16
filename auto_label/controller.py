@@ -10,7 +10,8 @@ from PyQt5.QtCore import QThreadPool
 from .config import VALID_EXTS, LOG_EVERY_N, MAX_THREADS_CAP
 from .signals import Signals
 from .tasks import ResizeTask
-from .augment import AugmentTask  # 신규
+from .augment import AugmentTask
+from .convert import ConvertRunner   # ★ 신규
 
 
 class MainWindow(QWidget):
@@ -24,8 +25,8 @@ class MainWindow(QWidget):
         # ========= 공통 상태 =========
         self.pool = QThreadPool.globalInstance()
         self.pool.setMaxThreadCount(min(MAX_THREADS_CAP, os.cpu_count() or 4))
-        self.setWindowTitle("이미지 툴킷 - 리사이즈 & LabelMe 증강")
-        self.resize(860, 640)
+        self.setWindowTitle("이미지 툴킷 - 리사이즈 & LabelMe 증강 & YOLO 변환")
+        self.resize(960, 680)
 
         # ========= 리사이즈 탭 =========
         self.directory = None
@@ -44,7 +45,6 @@ class MainWindow(QWidget):
         self.btnSelect.clicked.connect(self._select_directory)
         self.btnRun.clicked.connect(self._run_parallel)
         self.btnStop.clicked.connect(self._stop_all)
-
         self.btnRun.setEnabled(False)
         self.btnStop.setEnabled(False)
 
@@ -73,7 +73,6 @@ class MainWindow(QWidget):
         self.btnAugOut.clicked.connect(self._aug_select_out_dir)
         self.btnAugRun.clicked.connect(self._run_aug)
         self.btnAugStop.clicked.connect(self._stop_aug)
-
         self.btnAugRun.setEnabled(False)
         self.btnAugStop.setEnabled(False)
 
@@ -84,12 +83,41 @@ class MainWindow(QWidget):
         self.textAugLog.setReadOnly(True)
         self.textAugLog.setPlaceholderText("증강 로그가 표시됩니다...")
 
-    # ----------------- 공용 유틸 -----------------
+        # ========= YOLO 변환 탭 =========
+        self.cv_img_dir = None
+        self.cv_json_dir = None
+        self.cv_out_dir = None
+        self.cv_total = self.cv_done = self.cv_success = self.cv_failed = 0
+        self.cv_stop_event = threading.Event()
+        self.cv_signals = Signals()
+        self.cv_signals.one_done.connect(self._on_cv_one_done)
+        self.cv_signals.all_done.connect(self._on_cv_all_done)
+
+        self.labelCvPaths.setText("이미지/JSON/출력 폴더를 선택하세요")
+        self.labelCvPaths.setAlignment(Qt.AlignLeft)
+        self.threadLabelCv.setAlignment(Qt.AlignRight)
+        self.threadLabelCv.setText(f"스레드: {self.pool.maxThreadCount()}개 사용")
+
+        self.btnCvImg.clicked.connect(self._cv_select_img_dir)
+        self.btnCvJson.clicked.connect(self._cv_select_json_dir)
+        self.btnCvOut.clicked.connect(self._cv_select_out_dir)
+        self.btnCvRun.clicked.connect(self._run_cv)
+        self.btnCvStop.clicked.connect(self._stop_cv)
+        self.btnCvRun.setEnabled(False)
+        self.btnCvStop.setEnabled(False)
+
+        self.progressCv.setRange(0, 100)
+        self.progressCv.setValue(0)
+        self.progressCv.setFormat("%p%")
+        self.textCvLog.setReadOnly(True)
+        self.textCvLog.setPlaceholderText("변환 로그가 표시됩니다...")
+
+    # ----------------- 공용 -----------------
     def _append_log(self, text_edit, text: str):
         text_edit.append(text)
         text_edit.verticalScrollBar().setValue(text_edit.verticalScrollBar().maximum())
 
-    # ----------------- 리사이즈 핸들러 -----------------
+    # ----------------- 리사이즈 -----------------
     def _toggle_ui(self, running: bool):
         self.btnSelect.setEnabled(not running)
         self.btnRun.setEnabled((not running) and (self.directory is not None))
@@ -173,7 +201,7 @@ class MainWindow(QWidget):
             QMessageBox.warning(self, "완료(일부 실패)",
                                 f"{self.success}/{self.total} 성공, {self.failed} 실패. 로그를 확인하세요.")
 
-    # ----------------- 증강 핸들러 -----------------
+    # ----------------- 증강 -----------------
     def _toggle_aug_ui(self, running: bool):
         self.btnAugIn.setEnabled(not running)
         self.btnAugOut.setEnabled(not running)
@@ -271,3 +299,122 @@ class MainWindow(QWidget):
         else:
             QMessageBox.warning(self, "증강 완료(일부 실패)",
                                 f"{self.aug_success}/{self.aug_total} 성공, {self.aug_failed} 실패. 로그를 확인하세요.")
+
+    # ----------------- YOLO 변환 -----------------
+    def _toggle_cv_ui(self, running: bool):
+        self.btnCvImg.setEnabled(not running)
+        self.btnCvJson.setEnabled(not running)
+        self.btnCvOut.setEnabled(not running)
+        self.btnCvRun.setEnabled((not running) and all([self.cv_img_dir, self.cv_json_dir, self.cv_out_dir]))
+        self.btnCvStop.setEnabled(running)
+
+    def _cv_select_img_dir(self):
+        d = QFileDialog.getExistingDirectory(self, "이미지 폴더 선택")
+        if not d:
+            return
+        self.cv_img_dir = d
+        self._update_cv_paths_label()
+
+    def _cv_select_json_dir(self):
+        d = QFileDialog.getExistingDirectory(self, "JSON 폴더 선택 (LabelMe/AnyLabeling 또는 COCO)")
+        if not d:
+            return
+        self.cv_json_dir = d
+        self._update_cv_paths_label()
+
+    def _cv_select_out_dir(self):
+        d = QFileDialog.getExistingDirectory(self, "출력 폴더 선택 (YOLO 데이터셋 생성)")
+        if not d:
+            return
+        self.cv_out_dir = d
+        self._update_cv_paths_label()
+
+    def _update_cv_paths_label(self):
+        img_txt = self.cv_img_dir if self.cv_img_dir else "(미지정)"
+        json_txt = self.cv_json_dir if self.cv_json_dir else "(미지정)"
+        out_txt = self.cv_out_dir if self.cv_out_dir else "(미지정)"
+        self.labelCvPaths.setText(f"이미지: {img_txt}\nJSON: {json_txt}\n출력: {out_txt}")
+        self.btnCvRun.setEnabled(bool(self.cv_img_dir and self.cv_json_dir and self.cv_out_dir))
+
+    def _estimate_cv_total(self) -> int:
+        """대략적인 총 건수(이미지 수)를 미리 계산해 진행률 초기화에 사용."""
+        if not self.cv_json_dir:
+            return 0
+        jsondir = Path(self.cv_json_dir)
+        # COCO 탐지
+        coco_obj = None
+        for p in jsondir.glob("*.json"):
+            try:
+                obj = json.loads(p.read_text(encoding="utf-8"))
+                if all(k in obj for k in ("images", "annotations", "categories")):
+                    coco_obj = obj
+                    break
+            except Exception:
+                pass
+        if coco_obj:
+            return len(coco_obj.get("images", []))
+        # LabelMe 추정(= json 파일 수)
+        return len(list(jsondir.glob("*.json")))
+
+    def _run_cv(self):
+        if not all([self.cv_img_dir, self.cv_json_dir, self.cv_out_dir]):
+            QMessageBox.warning(self, "경고", "이미지/JSON/출력 폴더를 모두 선택하세요.")
+            return
+
+        self.cv_stop_event.clear()
+        self.textCvLog.clear()
+        self.progressCv.setValue(0)
+
+        imgdir = Path(self.cv_img_dir).resolve()
+        jsondir = Path(self.cv_json_dir).resolve()
+        outdir = Path(self.cv_out_dir).resolve()
+        size = int(self.spinCvSize.value())
+        val_ratio = float(self.doubleSpinValRatio.value())
+
+        # 진행률 총합(대략)
+        self.cv_total = max(1, self._estimate_cv_total())
+        self.cv_done = self.cv_success = self.cv_failed = 0
+
+        self._append_log(self.textCvLog,
+                         f"변환 시작: size={size}, val_ratio={val_ratio} → 예상 총 {self.cv_total} 샘플")
+        self._toggle_cv_ui(True)
+
+        runner = ConvertRunner(
+            imgdir=imgdir, jsondir=jsondir, out_root=outdir,
+            size=size, val_ratio=val_ratio,
+            signals=self.cv_signals, stop_event=self.cv_stop_event
+        )
+        self.pool.start(runner)
+
+    def _stop_cv(self):
+        if not self.btnCvStop.isEnabled():
+            return
+        self.cv_stop_event.set()
+        self._append_log(self.textCvLog, "변환 중지 요청을 보냈습니다... (진행 중인 항목은 마무리 후 종료)")
+
+    def _on_cv_one_done(self, ok: bool, msg: str):
+        self.cv_done += 1
+        if ok:
+            self.cv_success += 1
+        else:
+            self.cv_failed += 1
+
+        if (not ok) or (self.cv_done <= 100) or (self.cv_done % LOG_EVERY_N == 0):
+            self._append_log(self.textCvLog, msg)
+
+        pct = int(self.cv_done * 100 / self.cv_total) if self.cv_total else 100
+        self.progressCv.setValue(pct)
+
+    def _on_cv_all_done(self):
+        self._toggle_cv_ui(False)
+        self.progressCv.setValue(100)
+        self._append_log(self.textCvLog, f"변환 완료: 추정 총 {self.cv_total} | 성공 {self.cv_success} | 실패 {self.cv_failed}")
+
+        if self.cv_stop_event.is_set():
+            QMessageBox.information(self, "변환 중지됨",
+                                    f"사용자 요청으로 중지되었습니다.\n결과: 성공 {self.cv_success} / 실패 {self.cv_failed}")
+        elif self.cv_failed == 0:
+            QMessageBox.information(self, "변환 완료", f"모든 샘플 생성 완료. (성공 {self.cv_success})")
+        else:
+            QMessageBox.warning(self, "변환 완료(일부 실패)",
+                                f"성공 {self.cv_success}, 실패 {self.cv_failed}. 로그를 확인하세요.")
