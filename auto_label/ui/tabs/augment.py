@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 from ...core.constants import AUGMENT_RESOLUTION, LOG_EVERY_N
 from ...qt.signals import Signals
-from ...services.augment import AugmentationConfig, LabelmeAugmentationTask
+from ...services.augment import AugmentationConfig, LabelMeAugmentationTask
 from .common import ProgressTracker, append_log
 
 
@@ -111,7 +111,7 @@ class AugmentationTabController:
             target_height=target_height,
         )
         for json_path in json_files:
-            task = LabelmeAugmentationTask(
+            task = LabelMeAugmentationTask(
                 json_path=json_path,
                 input_dir=self.input_dir,
                 output_dir=self.output_dir,

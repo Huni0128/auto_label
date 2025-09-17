@@ -1,27 +1,56 @@
-"""Core constants shared across the application."""
+"""애플리케이션 전역에서 공유하는 핵심 상수 모듈.
+
+이 모듈은 이미지 처리, 로깅, 스레딩, 저장 옵션 등에 대한 공통 상수를
+제공합니다. 팀 컨벤션(PEP 8)과 일관된 명명 규칙을 따릅니다.
+"""
+
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Final
 
-# === General image configuration ===
-TARGET_SIZE: Tuple[int, int] = (1280, 720)
-IMAGE_WIDTH, IMAGE_HEIGHT = TARGET_SIZE
+# === 이미지 관련 공통 해상도 ===
+TARGET_SIZE: Final[tuple[int, int]] = (1280, 720)
 
-# File extensions that are treated as images by the tooling.
-VALID_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff", ".webp")
-IMG_EXTS = {ext.lower() for ext in VALID_EXTS if not ext.endswith("gif")} | {".gif"}
+# 개별 축 크기를 명확히 사용해야 할 경우를 위한 별도 상수
+IMAGE_WIDTH: Final[int] = TARGET_SIZE[0]
+IMAGE_HEIGHT: Final[int] = TARGET_SIZE[1]
 
-# Threading / logging configuration.
-MAX_THREADS_CAP = 32
-LOG_EVERY_N = 100
+# === 이미지로 취급하는 파일 확장자 ===
+# 툴링에서 이미지로 인식하는 확장자 목록 (소문자 사용 권장)
+VALID_EXTS: Final[tuple[str, ...]] = (
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".gif",
+    ".tif",
+    ".tiff",
+    ".webp",
+)
 
-# Saving options that favour speed over compression for JPEG outputs.
-SAVE_JPEG_SPEED_PARAMS = {
-    "quality": 85,
-    "subsampling": 1,
-    "optimize": False,
+# 대소문자 혼용에 대비해 모두 소문자로 집합 구성.
+# GIF는 애니메이션 여부와 무관하게 포함합니다.
+IMG_EXTS: Final[set[str]] = {
+    ext.lower() for ext in VALID_EXTS if not ext.endswith("gif")
+} | {".gif"}
+
+# === 스레딩 / 로깅 설정 ===
+# 작업자 스레드 상한
+MAX_THREADS_CAP: Final[int] = 32
+
+# 진행 상황 로깅 간격 (N개마다 1회 로깅)
+LOG_EVERY_N: Final[int] = 100
+
+# === 저장 옵션 ===
+# JPEG 저장 시 압축률보다 속도 우선 옵션.
+# Pillow.save(**kwargs) 등에 그대로 전달해 사용합니다.
+SAVE_JPEG_SPEED_PARAMS: Final[dict[str, int | bool]] = {
+    "quality": 85,       # 시각적 품질과 용량의 균형값
+    "subsampling": 1,    # 4:2:2
+    "optimize": False,   # 최적화 비활성화(속도 우선)
     "progressive": False,
 }
 
-# Albumentations target resolution used by the augment task.
-AUGMENT_RESOLUTION: Tuple[int, int] = TARGET_SIZE
+# === 증강(augmentation) 관련 ===
+# Albumentations 등 증강 파이프라인의 기본 타깃 해상도
+AUGMENT_RESOLUTION: Final[tuple[int, int]] = TARGET_SIZE
