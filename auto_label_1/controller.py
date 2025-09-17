@@ -27,7 +27,7 @@ class MainWindow(QWidget):
         # ========= 공통 상태 =========
         self.pool = QThreadPool.globalInstance()
         self.pool.setMaxThreadCount(min(MAX_THREADS_CAP, os.cpu_count() or 4))
-        self.setWindowTitle("이미지 툴킷 - 리사이즈 & LabelMe 증강 & YOLO 변환/학습")
+        self.setWindowTitle("Auto Labeling PipeLine")
         self.resize(1000, 720)
 
         # ========= 리사이즈 탭 =========

@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication
-from auto_label.controller import MainWindow
+from auto_label.ui.main_window import MainWindow
 
 
 def main():
