@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>4</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabResize">
       <attribute name="title">
@@ -54,6 +54,49 @@
           <widget class="QPushButton" name="btnStop">
            <property name="text">
             <string>중지</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="resizeResolutionLayout">
+         <item>
+          <widget class="QLabel" name="labelResizeResolution">
+           <property name="text">
+            <string>출력 해상도</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinResizeWidth">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>8192</number>
+           </property>
+           <property name="singleStep">
+            <number>16</number>
+           </property>
+           <property name="value">
+            <number>1280</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinResizeHeight">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>8192</number>
+           </property>
+           <property name="singleStep">
+            <number>16</number>
+           </property>
+           <property name="value">
+            <number>720</number>
            </property>
           </widget>
          </item>
@@ -143,6 +186,45 @@
            </property>
            <property name="value">
             <number>5</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelAugResolution">
+           <property name="text">
+            <string>출력 해상도</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinAugWidth">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>8192</number>
+           </property>
+           <property name="singleStep">
+            <number>16</number>
+           </property>
+           <property name="value">
+            <number>1280</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinAugHeight">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>8192</number>
+           </property>
+           <property name="singleStep">
+            <number>16</number>
+           </property>
+           <property name="value">
+            <number>720</number>
            </property>
           </widget>
          </item>
@@ -239,7 +321,7 @@
          <item>
           <widget class="QLabel" name="labelCvSize">
            <property name="text">
-            <string>사이즈 (W×H)</string>
+            <string>해상도 (W×H)</string>
            </property>
           </widget>
          </item>
@@ -384,7 +466,7 @@
          <item>
           <widget class="QLabel" name="labelImgSz">
            <property name="text">
-            <string>imgsz (W×H)</string>
+            <string>해상도 (W×H)</string>
            </property>
           </widget>
          </item>
@@ -544,7 +626,7 @@
          <item>
           <widget class="QLabel" name="labelALImgSz">
            <property name="text">
-            <string>imgsz (W×H)</string>
+            <string>해상도 (W×H)</string>
            </property>
           </widget>
          </item>

@@ -8,7 +8,7 @@ from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from ...core.constants import LOG_EVERY_N, VALID_EXTS
+from ...core.constants import LOG_EVERY_N, TARGET_SIZE, VALID_EXTS
 from ...qt.signals import Signals
 from ...services.resize import ResizeImageTask, ResizeJob
 from .common import ProgressTracker, append_log
@@ -38,6 +38,11 @@ class ResizeTabController:
         self.window.textLog.setReadOnly(True)
         self.window.textLog.setPlaceholderText("변환 로그가 표시됩니다...")
 
+        self.window.spinResizeWidth.setValue(TARGET_SIZE[0])
+        self.window.spinResizeHeight.setValue(TARGET_SIZE[1])
+        self.window.spinResizeWidth.valueChanged.connect(self._on_resolution_changed)
+        self.window.spinResizeHeight.valueChanged.connect(self._on_resolution_changed)
+
         self.window.btnSelect.clicked.connect(self._select_directory)
         self.window.btnRun.clicked.connect(self._run_parallel)
         self.window.btnStop.clicked.connect(self._stop_all)
@@ -49,6 +54,41 @@ class ResizeTabController:
         self.window.btnSelect.setEnabled(not running)
         self.window.btnRun.setEnabled((not running) and self.directory is not None)
         self.window.btnStop.setEnabled(running)
+        self.window.spinResizeWidth.setEnabled(not running)
+        self.window.spinResizeHeight.setEnabled(not running)
+
+    def _current_size(self) -> tuple[int, int]:
+        return (
+            int(self.window.spinResizeWidth.value()),
+            int(self.window.spinResizeHeight.value()),
+        )
+
+    def _build_output_dir(self, directory: Path, size: tuple[int, int]) -> Path:
+        width, height = size
+        return (directory.parent / f"raw_images_{width}x{height}").resolve()
+
+    def _refresh_path_label(self) -> None:
+        if self.directory:
+            out_txt = str(self.output_dir) if self.output_dir else "(미지정)"
+            self.window.labelPath.setText(f"입력: {self.directory}\n출력: {out_txt}")
+        else:
+            self.window.labelPath.setText("디렉토리를 선택하세요")
+
+    def _update_output_dir(self) -> None:
+        if self.directory:
+            self.output_dir = self._build_output_dir(self.directory, self._current_size())
+        else:
+            self.output_dir = None
+        self._refresh_path_label()
+
+    def _on_resolution_changed(self) -> None:
+        if not self.directory:
+            return
+
+        previous = self.output_dir
+        self._update_output_dir()
+        if self.output_dir and self.output_dir != previous:
+            self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def _select_directory(self) -> None:
         directory = QFileDialog.getExistingDirectory(self.window, "디렉토리 선택")
@@ -56,14 +96,16 @@ class ResizeTabController:
             return
 
         self.directory = Path(directory)
-        self.output_dir = (self.directory / "../raw_images_1280x720").resolve()
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.window.labelPath.setText(
-            f"입력: {self.directory}\n출력: {self.output_dir}"
-        )
+        self._update_output_dir()
+        if self.output_dir:
+            self.output_dir.mkdir(parents=True, exist_ok=True)
         self.window.progressBar.setValue(0)
         self.window.textLog.clear()
-        append_log(self.window.textLog, "준비 완료. '변환 실행(병렬)'을 눌러 시작하세요.")
+        width, height = self._current_size()
+        append_log(
+            self.window.textLog,
+            f"준비 완료. 출력 해상도 {width}x{height}. '변환 실행(병렬)'을 눌러 시작하세요.",
+        )
         self.window.btnRun.setEnabled(True)
 
     def _run_parallel(self) -> None:
@@ -73,20 +115,25 @@ class ResizeTabController:
 
         self.stop_event.clear()
         files: list[ResizeJob] = []
-        output_dir = self.output_dir
-        if output_dir is None:
-            return
+        size = self._current_size()
+        output_dir = self._build_output_dir(self.directory, size)
+        self.output_dir = output_dir
+        output_dir.mkdir(parents=True, exist_ok=True)
+        self._refresh_path_label()
         for name in os.listdir(self.directory):
             src = self.directory / name
             if src.is_file() and name.lower().endswith(VALID_EXTS):
-                files.append(ResizeJob(src, output_dir / name))
+                files.append(ResizeJob(src, output_dir / name, size))
 
         self.progress.reset(len(files))
         if self.progress.total == 0:
             append_log(self.window.textLog, "처리할 이미지가 없습니다.")
             return
 
-        append_log(self.window.textLog, f"변환 시작 (총 {self.progress.total}개) ...")
+        append_log(
+            self.window.textLog,
+            f"변환 시작 (총 {self.progress.total}개, 목표 해상도 {size[0]}x{size[1]}) ...",
+        )
         self._toggle_ui(True)
 
         for job in files:

@@ -7,7 +7,7 @@ from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from ...core.constants import LOG_EVERY_N
+from ...core.constants import AUGMENT_RESOLUTION, LOG_EVERY_N
 from ...qt.signals import Signals
 from ...services.augment import AugmentationConfig, LabelmeAugmentationTask
 from .common import ProgressTracker, append_log
@@ -37,6 +37,9 @@ class AugmentationTabController:
         self.window.textAugLog.setReadOnly(True)
         self.window.textAugLog.setPlaceholderText("증강 로그가 표시됩니다...")
 
+        self.window.spinAugWidth.setValue(AUGMENT_RESOLUTION[0])
+        self.window.spinAugHeight.setValue(AUGMENT_RESOLUTION[1])
+
         self.window.btnAugIn.clicked.connect(self._select_input_dir)
         self.window.btnAugOut.clicked.connect(self._select_output_dir)
         self.window.btnAugRun.clicked.connect(self._run_augmentation)
@@ -50,6 +53,8 @@ class AugmentationTabController:
         can_run = (not running) and (self.input_dir is not None) and (self.output_dir is not None)
         self.window.btnAugRun.setEnabled(can_run)
         self.window.btnAugStop.setEnabled(running)
+        self.window.spinAugWidth.setEnabled(not running)
+        self.window.spinAugHeight.setEnabled(not running)
 
     def _select_input_dir(self) -> None:
         directory = QFileDialog.getExistingDirectory(self.window, "입력 폴더 선택 (LabelMe JSON + 이미지)")
@@ -87,14 +92,24 @@ class AugmentationTabController:
             return
 
         multiplier = max(1, int(self.window.spinMultiplier.value()))
+        target_width = int(self.window.spinAugWidth.value())
+        target_height = int(self.window.spinAugHeight.value())
         self.progress.reset(len(json_files) * multiplier)
         append_log(
             self.window.textAugLog,
-            f"증강 시작: JSON {len(json_files)}개, multiplier={multiplier} → 총 {self.progress.total} 샘플",
+            (
+                "증강 시작: "
+                f"JSON {len(json_files)}개, multiplier={multiplier}, "
+                f"출력 해상도 {target_width}x{target_height} → 총 {self.progress.total} 샘플"
+            ),
         )
         self._toggle_ui(True)
 
-        config = AugmentationConfig(multiplier=multiplier)
+        config = AugmentationConfig(
+            multiplier=multiplier,
+            target_width=target_width,
+            target_height=target_height,
+        )
         for json_path in json_files:
             task = LabelmeAugmentationTask(
                 json_path=json_path,

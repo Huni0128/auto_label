@@ -8,7 +8,6 @@ from pathlib import Path
 from PyQt5.QtCore import QRunnable
 from PIL import Image
 
-from ..core.constants import TARGET_SIZE
 from ..core.imaging import ensure_rgb, reduce_for_speed, save_image, resize_exact
 from ..qt.signals import Signals
 
@@ -19,6 +18,7 @@ class ResizeJob:
 
     source: Path
     destination: Path
+    size: tuple[int,int]
 
 
 class ResizeImageTask(QRunnable):
@@ -52,8 +52,8 @@ class ResizeImageTask(QRunnable):
                     self._emit(False, f"[STOPPED] {self.job.source.name}")
                     return
 
-                image = reduce_for_speed(image, TARGET_SIZE)
-                image = resize_exact(image, TARGET_SIZE)
+                image = reduce_for_speed(image, self.job.size)
+                image = resize_exact(image, self.job.size)
                 save_image(image, self.job.destination)
 
             self._emit(True, f"[OK] {self.job.destination.name}")

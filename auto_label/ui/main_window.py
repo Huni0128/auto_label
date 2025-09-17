@@ -8,7 +8,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QWidget
 
-from ..core.constants import MAX_THREADS_CAP
+from ..core.constants import MAX_THREADS_CAP, TARGET_SIZE
 from .tabs.auto_label import AutoLabelTabController
 from .tabs.augment import AugmentationTabController
 from .tabs.convert import ConvertTabController
@@ -26,7 +26,7 @@ class MainWindow(QWidget):
         self.pool = QThreadPool.globalInstance()
         self.pool.setMaxThreadCount(min(MAX_THREADS_CAP, os.cpu_count() or 4))
 
-        self.setWindowTitle("이미지 툴킷 - 리사이즈 & LabelMe 증강 & YOLO 변환/학습")
+        self.setWindowTitle("Auto Labeling PipeLine")
         self.resize(1000, 720)
 
         self._configure_defaults()
@@ -39,26 +39,37 @@ class MainWindow(QWidget):
 
     # Internal ----------------------------------------------------------------
     def _configure_defaults(self) -> None:
+        default_w, default_h = TARGET_SIZE
+
+        if hasattr(self, "spinResizeWidth"):
+            self.spinResizeWidth.setValue(default_w)
+        if hasattr(self, "spinResizeHeight"):
+            self.spinResizeHeight.setValue(default_h)
         if hasattr(self, "spinCvW"):
-            self.spinCvW.setValue(1280)
+            self.spinCvW.setValue(default_w)
         if hasattr(self, "spinCvH"):
-            self.spinCvH.setValue(720)
+            self.spinCvH.setValue(default_h)
         if hasattr(self, "doubleSpinValRatio"):
             self.doubleSpinValRatio.setValue(0.20)
 
+        if hasattr(self, "spinAugWidth"):
+            self.spinAugWidth.setValue(default_w)
+        if hasattr(self, "spinAugHeight"):
+            self.spinAugHeight.setValue(default_h)
+
         if hasattr(self, "spinTrainW"):
-            self.spinTrainW.setValue(1280)
+            self.spinTrainW.setValue(default_w)
         if hasattr(self, "spinTrainH"):
-            self.spinTrainH.setValue(720)
+            self.spinTrainH.setValue(default_h)
         if hasattr(self, "spinTrainEpochs"):
             self.spinTrainEpochs.setValue(100)
         if hasattr(self, "spinTrainBatch"):
             self.spinTrainBatch.setValue(16)
 
         if hasattr(self, "spinALW"):
-            self.spinALW.setValue(1280)
+            self.spinALW.setValue(default_w)
         if hasattr(self, "spinALH"):
-            self.spinALH.setValue(720)
+            self.spinALH.setValue(default_h)
         if hasattr(self, "doubleALConf"):
             self.doubleALConf.setValue(0.25)
         if hasattr(self, "doubleALIou"):
