@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1000</width>
-    <height>720</height>
+    <width>1389</width>
+    <height>1047</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="tabResize">
       <attribute name="title">
@@ -832,6 +832,172 @@
          </property>
          <property name="placeholderText">
           <string>오토 라벨 로그가 표시됩니다...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabReview">
+      <attribute name="title">
+       <string>라벨 검수</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="reviewLayout">
+       <item>
+        <widget class="QLabel" name="labelReviewPaths">
+         <property name="text">
+          <string>이미지/라벨 폴더와 분리 저장 폴더를 선택하세요.</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="reviewPathBtns">
+         <item>
+          <widget class="QPushButton" name="btnReviewImages">
+           <property name="text">
+            <string>이미지 폴더</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReviewLabels">
+           <property name="text">
+            <string>라벨 폴더</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReviewGood">
+           <property name="text">
+            <string>정상 폴더</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReviewBad">
+           <property name="text">
+            <string>이상 폴더</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelReviewStatus">
+         <property name="text">
+          <string>0/0 · 정상 표시 0 · 미분류 0</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelReviewInfo">
+         <property name="text">
+          <string>검수할 파일을 불러오세요.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QScrollArea" name="scrollReviewImage">
+         <property name="minimumSize">
+          <size>
+           <width>1280</width>
+           <height>720</height>
+          </size>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollReviewWidget">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>1328</width>
+            <height>738</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="reviewImageLayout">
+           <item>
+            <widget class="QLabel" name="labelReviewImage">
+             <property name="minimumSize">
+              <size>
+               <width>1280</width>
+               <height>720</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>이미지가 여기에 표시됩니다.</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="reviewNavLayout">
+         <item>
+          <widget class="QPushButton" name="btnReviewPrev">
+           <property name="text">
+            <string>이전 (←)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReviewMarkGood">
+           <property name="text">
+            <string>정상 표시 및 다음 (Space)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReviewClearGood">
+           <property name="text">
+            <string>정상 해제</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReviewNext">
+           <property name="text">
+            <string>다음 (→)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="reviewNavSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnReviewFinalize">
+           <property name="text">
+            <string>폴더로 분리</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTextEdit" name="textReviewLog">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>검수 로그가 표시됩니다...</string>
          </property>
         </widget>
        </item>

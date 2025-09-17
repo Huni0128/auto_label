@@ -12,6 +12,7 @@ from ..core.constants import MAX_THREADS_CAP, TARGET_SIZE
 from .tabs.auto_label import AutoLabelTabController
 from .tabs.augment import AugmentationTabController
 from .tabs.convert import ConvertTabController
+from .tabs.review import LabelReviewTabController
 from .tabs.resize import ResizeTabController
 from .tabs.train import TrainTabController
 
@@ -35,6 +36,7 @@ class MainWindow(QWidget):
         self.augment_tab = AugmentationTabController(self, self.pool)
         self.convert_tab = ConvertTabController(self, self.pool)
         self.train_tab = TrainTabController(self, self.pool)
+        self.review_tab = LabelReviewTabController(self, self.pool)
         self.auto_label_tab = AutoLabelTabController(self, self.pool)
 
     # Internal ----------------------------------------------------------------

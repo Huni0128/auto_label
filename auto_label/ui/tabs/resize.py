@@ -29,7 +29,7 @@ class ResizeTabController:
         self.signals.all_done.connect(self._on_all_done)
 
         self.window.labelPath.setAlignment(Qt.AlignLeft)
-        self.window.labelPath.setText("디렉토리를 선택하세요")
+        self.window.labelPath.setText("폴더를 선택하세요")
         self.window.threadLabel.setAlignment(Qt.AlignRight)
         self.window.threadLabel.setText(f"스레드: {self.pool.maxThreadCount()}개 사용")
         self.window.progressBar.setRange(0, 100)
@@ -72,7 +72,7 @@ class ResizeTabController:
             out_txt = str(self.output_dir) if self.output_dir else "(미지정)"
             self.window.labelPath.setText(f"입력: {self.directory}\n출력: {out_txt}")
         else:
-            self.window.labelPath.setText("디렉토리를 선택하세요")
+            self.window.labelPath.setText("폴더를 선택하세요")
 
     def _update_output_dir(self) -> None:
         if self.directory:
@@ -91,7 +91,7 @@ class ResizeTabController:
             self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def _select_directory(self) -> None:
-        directory = QFileDialog.getExistingDirectory(self.window, "디렉토리 선택")
+        directory = QFileDialog.getExistingDirectory(self.window, "폴더 선택")
         if not directory:
             return
 
@@ -110,7 +110,7 @@ class ResizeTabController:
 
     def _run_parallel(self) -> None:
         if not self.directory:
-            QMessageBox.warning(self.window, "경고", "디렉토리를 먼저 선택하세요.")
+            QMessageBox.warning(self.window, "경고", "폴더를 먼저 선택하세요.")
             return
 
         self.stop_event.clear()
