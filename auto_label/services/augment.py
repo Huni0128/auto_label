@@ -19,7 +19,7 @@ import cv2
 import numpy as np
 from PyQt5.QtCore import QRunnable
 
-from ..core.constants import AUGMENT_RESOLUTION, IMG_EXTS
+from ..core.config import AUGMENT_RESOLUTION, IMG_EXTS
 from ..core.polygons import flatten_polygons, sanitize_polygon
 from ..qt.signals import Signals
 

@@ -134,7 +134,7 @@ def draw_viz(image_bgr: np.ndarray, shapes: Sequence[dict]) -> np.ndarray:
             continue
 
         # 폴리곤 외곽선
-        cv2.polylines(visualised, [pts], True, (0, 255, 0), 2)
+        cv2.polylines(visualised, [pts], True, (0, 0, 255), 2)
 
         # 라벨/스코어 박스
         x, y = pts[0]

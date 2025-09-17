@@ -8,7 +8,7 @@ from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from ...core.constants import LOG_EVERY_N, TARGET_SIZE, VALID_EXTS
+from ...core.config import LOG_EVERY_N, TARGET_SIZE, VALID_EXTS
 from ...qt.signals import Signals
 from ...services.resize import ResizeImageTask, ResizeJob
 from .common import ProgressTracker, append_log

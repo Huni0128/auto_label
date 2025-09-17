@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Iterable, List
 
-from .constants import IMG_EXTS
+from .config import IMG_EXTS
 
 
 def iter_image_files(path: Path) -> Iterable[Path]:

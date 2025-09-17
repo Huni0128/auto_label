@@ -7,7 +7,7 @@ from typing import List
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from ...core.constants import LOG_EVERY_N
+from ...core.config import LOG_EVERY_N
 from ...qt.signals import Signals
 from ...services.split import (
     DatasetEntry,

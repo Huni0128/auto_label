@@ -7,7 +7,7 @@ from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from ...core.constants import AUGMENT_RESOLUTION, LOG_EVERY_N
+from ...core.config import AUGMENT_RESOLUTION, LOG_EVERY_N
 from ...qt.signals import Signals
 from ...services.augment import AugmentationConfig, LabelMeAugmentationTask
 from .common import ProgressTracker, append_log

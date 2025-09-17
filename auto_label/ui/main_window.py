@@ -8,7 +8,7 @@ from PyQt5 import uic
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QWidget
 
-from ..core.constants import MAX_THREADS_CAP, TARGET_SIZE
+from ..core.config import MAX_THREADS_CAP, TARGET_SIZE
 from .tabs.auto_label import AutoLabelTabController
 from .tabs.augment import AugmentationTabController
 from .tabs.convert import ConvertTabController

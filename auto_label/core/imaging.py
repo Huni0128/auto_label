@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from .constants import SAVE_JPEG_SPEED_PARAMS
+from .config import SAVE_JPEG_SPEED_PARAMS
 
 
 def get_resample_filter() -> int:
