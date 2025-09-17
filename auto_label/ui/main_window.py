@@ -14,6 +14,7 @@ from .tabs.augment import AugmentationTabController
 from .tabs.convert import ConvertTabController
 from .tabs.review import LabelReviewTabController
 from .tabs.resize import ResizeTabController
+from .tabs.split import DatasetSplitTabController
 from .tabs.train import TrainTabController
 
 
@@ -38,6 +39,7 @@ class MainWindow(QWidget):
         self.train_tab = TrainTabController(self, self.pool)
         self.review_tab = LabelReviewTabController(self, self.pool)
         self.auto_label_tab = AutoLabelTabController(self, self.pool)
+        self.split_tab = DatasetSplitTabController(self, self.pool)
 
     # Internal ----------------------------------------------------------------
     def _configure_defaults(self) -> None:
@@ -84,3 +86,7 @@ class MainWindow(QWidget):
             self.chkALViz.setChecked(True)
         if hasattr(self, "chkALCopy"):
             self.chkALCopy.setChecked(True)
+        if hasattr(self, "doubleSpinSplitVal"):
+            self.doubleSpinSplitVal.setValue(0.20)
+        if hasattr(self, "spinSplitSeed"):
+            self.spinSplitSeed.setValue(42)
