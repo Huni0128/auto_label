@@ -13,242 +13,749 @@
   <property name="windowTitle">
    <string>이미지 툴킷 - 리사이즈 &amp; LabelMe 증강 &amp; YOLO 변환/학습</string>
   </property>
-
   <layout class="QVBoxLayout" name="rootLayout">
    <item>
     <widget class="QTabWidget" name="tabWidget">
-
-     <!-- ===== Tab 1: Resize ===== -->
+     <property name="currentIndex">
+      <number>4</number>
+     </property>
      <widget class="QWidget" name="tabResize">
-      <attribute name="title"><string>리사이즈</string></attribute>
+      <attribute name="title">
+       <string>리사이즈</string>
+      </attribute>
       <layout class="QVBoxLayout" name="resizeLayout">
        <item>
         <widget class="QLabel" name="labelPath">
-         <property name="text"><string>디렉토리를 선택하세요</string></property>
-         <property name="alignment"><set>Qt::AlignLeft|Qt::AlignVCenter</set></property>
+         <property name="text">
+          <string>디렉토리를 선택하세요</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
         </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="buttonLayout">
-         <item><widget class="QPushButton" name="btnSelect"><property name="text"><string>디렉토리 선택</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnRun"><property name="text"><string>변환 실행(병렬)</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnStop"><property name="text"><string>중지</string></property></widget></item>
+         <item>
+          <widget class="QPushButton" name="btnSelect">
+           <property name="text">
+            <string>디렉토리 선택</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnRun">
+           <property name="text">
+            <string>변환 실행(병렬)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnStop">
+           <property name="text">
+            <string>중지</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <widget class="QProgressBar" name="progressBar">
-         <property name="value"><number>0</number></property>
-         <property name="format"><string>%p%</string></property>
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="format">
+          <string>%p%</string>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="threadLabel">
-         <property name="text"><string>스레드: -</string></property>
-         <property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property>
+         <property name="text">
+          <string>스레드: -</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QTextEdit" name="textLog">
-         <property name="readOnly"><bool>true</bool></property>
-         <property name="placeholderText"><string>변환 로그가 표시됩니다...</string></property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>변환 로그가 표시됩니다...</string>
+         </property>
         </widget>
        </item>
       </layout>
      </widget>
-
-     <!-- ===== Tab 2: Augment ===== -->
      <widget class="QWidget" name="tabAugment">
-      <attribute name="title"><string>LabelMe 증강</string></attribute>
+      <attribute name="title">
+       <string>LabelMe 증강</string>
+      </attribute>
       <layout class="QVBoxLayout" name="augmentLayout">
        <item>
         <widget class="QLabel" name="labelAugPaths">
-         <property name="text"><string>입력/출력 폴더를 선택하세요</string></property>
-         <property name="alignment"><set>Qt::AlignLeft|Qt::AlignVCenter</set></property>
+         <property name="text">
+          <string>입력/출력 폴더를 선택하세요</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
         </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="augPathBtns">
-         <item><widget class="QPushButton" name="btnAugIn"><property name="text"><string>입력 폴더 선택</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnAugOut"><property name="text"><string>출력 폴더 선택</string></property></widget></item>
+         <item>
+          <widget class="QPushButton" name="btnAugIn">
+           <property name="text">
+            <string>입력 폴더 선택</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAugOut">
+           <property name="text">
+            <string>출력 폴더 선택</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="augControls">
-         <item><widget class="QLabel" name="labelMultiplier"><property name="text"><string>Multiplier</string></property></widget></item>
-         <item><widget class="QSpinBox" name="spinMultiplier"><property name="minimum"><number>1</number></property><property name="maximum"><number>100</number></property><property name="value"><number>5</number></property></widget></item>
-         <item><widget class="QPushButton" name="btnAugRun"><property name="text"><string>증강 실행(병렬)</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnAugStop"><property name="text"><string>중지</string></property></widget></item>
+         <item>
+          <widget class="QLabel" name="labelMultiplier">
+           <property name="text">
+            <string>Multiplier</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinMultiplier">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAugRun">
+           <property name="text">
+            <string>증강 실행(병렬)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAugStop">
+           <property name="text">
+            <string>중지</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <widget class="QProgressBar" name="progressAug">
-         <property name="value"><number>0</number></property>
-         <property name="format"><string>%p%</string></property>
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="format">
+          <string>%p%</string>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="threadLabelAug">
-         <property name="text"><string>스레드: -</string></property>
-         <property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property>
+         <property name="text">
+          <string>스레드: -</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QTextEdit" name="textAugLog">
-         <property name="readOnly"><bool>true</bool></property>
-         <property name="placeholderText"><string>증강 로그가 표시됩니다...</string></property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>증강 로그가 표시됩니다...</string>
+         </property>
         </widget>
        </item>
       </layout>
      </widget>
-
-     <!-- ===== Tab 3: YOLO 변환 ===== -->
      <widget class="QWidget" name="tabConvert">
-      <attribute name="title"><string>YOLO 변환</string></attribute>
+      <attribute name="title">
+       <string>YOLO 변환</string>
+      </attribute>
       <layout class="QVBoxLayout" name="cvLayout">
        <item>
         <widget class="QLabel" name="labelCvPaths">
-         <property name="text"><string>이미지/JSON/출력 폴더를 선택하세요</string></property>
-         <property name="alignment"><set>Qt::AlignLeft|Qt::AlignVCenter</set></property>
+         <property name="text">
+          <string>이미지/JSON/출력 폴더를 선택하세요</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
         </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="cvPathBtns1">
-         <item><widget class="QPushButton" name="btnCvImg"><property name="text"><string>이미지 폴더</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnCvJson"><property name="text"><string>JSON 폴더</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnCvOut"><property name="text"><string>출력 폴더</string></property></widget></item>
+         <item>
+          <widget class="QPushButton" name="btnCvImg">
+           <property name="text">
+            <string>이미지 폴더</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnCvJson">
+           <property name="text">
+            <string>JSON 폴더</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnCvOut">
+           <property name="text">
+            <string>출력 폴더</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="cvControls">
-         <item><widget class="QLabel" name="labelCvSize"><property name="text"><string>사이즈 (W×H)</string></property></widget></item>
-         <item><widget class="QSpinBox" name="spinCvW"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="singleStep"><number>32</number></property><property name="value"><number>1280</number></property></widget></item>
-         <item><widget class="QSpinBox" name="spinCvH"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="singleStep"><number>16</number></property><property name="value"><number>720</number></property></widget></item>
-         <item><widget class="QLabel" name="labelValRatio"><property name="text"><string>Val 비율</string></property></widget></item>
-         <item><widget class="QDoubleSpinBox" name="doubleSpinValRatio"><property name="decimals"><number>2</number></property><property name="minimum"><double>0.00</double></property><property name="maximum"><double>1.00</double></property><property name="singleStep"><double>0.05</double></property><property name="value"><double>0.20</double></property></widget></item>
-         <item><widget class="QPushButton" name="btnCvRun"><property name="text"><string>변환 실행</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnCvStop"><property name="text"><string>중지</string></property></widget></item>
+         <item>
+          <widget class="QLabel" name="labelCvSize">
+           <property name="text">
+            <string>사이즈 (W×H)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinCvW">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>4096</number>
+           </property>
+           <property name="singleStep">
+            <number>32</number>
+           </property>
+           <property name="value">
+            <number>1280</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinCvH">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>4096</number>
+           </property>
+           <property name="singleStep">
+            <number>16</number>
+           </property>
+           <property name="value">
+            <number>720</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelValRatio">
+           <property name="text">
+            <string>Val 비율</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinValRatio">
+           <property name="decimals">
+            <number>2</number>
+           </property>
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.050000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.200000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnCvRun">
+           <property name="text">
+            <string>변환 실행</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnCvStop">
+           <property name="text">
+            <string>중지</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <widget class="QProgressBar" name="progressCv">
-         <property name="value"><number>0</number></property>
-         <property name="format"><string>%p%</string></property>
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="format">
+          <string>%p%</string>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="threadLabelCv">
-         <property name="text"><string>스레드: -</string></property>
-         <property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property>
+         <property name="text">
+          <string>스레드: -</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
         </widget>
        </item>
        <item>
         <widget class="QTextEdit" name="textCvLog">
-         <property name="readOnly"><bool>true</bool></property>
-         <property name="placeholderText"><string>변환 로그가 표시됩니다...</string></property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>변환 로그가 표시됩니다...</string>
+         </property>
         </widget>
        </item>
       </layout>
      </widget>
-
-     <!-- ===== Tab 4: YOLO 학습 ===== -->
      <widget class="QWidget" name="tabTrain">
-      <attribute name="title"><string>YOLO 학습</string></attribute>
+      <attribute name="title">
+       <string>YOLO 학습</string>
+      </attribute>
       <layout class="QVBoxLayout" name="trainLayout">
-       <item><widget class="QLabel" name="labelTrainPaths"><property name="text"><string>모델(.pt)과 dataset.yaml을 선택하세요</string></property></widget></item>
+       <item>
+        <widget class="QLabel" name="labelTrainPaths">
+         <property name="text">
+          <string>모델(.pt)과 dataset.yaml을 선택하세요</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <layout class="QHBoxLayout" name="trainPathBtns">
-         <item><widget class="QPushButton" name="btnTrainModel"><property name="text"><string>모델 선택(.pt)</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnTrainData"><property name="text"><string>dataset.yaml 선택</string></property></widget></item>
+         <item>
+          <widget class="QPushButton" name="btnTrainModel">
+           <property name="text">
+            <string>모델 선택(.pt)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnTrainData">
+           <property name="text">
+            <string>dataset.yaml 선택</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="trainControls1">
-         <item><widget class="QLabel" name="labelImgSz"><property name="text"><string>imgsz (W×H)</string></property></widget></item>
-         <item><widget class="QSpinBox" name="spinTrainW"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="singleStep"><number>32</number></property><property name="value"><number>1280</number></property></widget></item>
-         <item><widget class="QSpinBox" name="spinTrainH"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="singleStep"><number>16</number></property><property name="value"><number>720</number></property></widget></item>
-         <item><widget class="QLabel" name="labelEpochs"><property name="text"><string>epochs</string></property></widget></item>
-         <item><widget class="QSpinBox" name="spinTrainEpochs"><property name="minimum"><number>1</number></property><property name="maximum"><number>1000</number></property><property name="value"><number>100</number></property></widget></item>
-         <item><widget class="QLabel" name="labelBatch"><property name="text"><string>batch</string></property></widget></item>
-         <item><widget class="QSpinBox" name="spinTrainBatch"><property name="minimum"><number>1</number></property><property name="maximum"><number>1024</number></property><property name="value"><number>16</number></property></widget></item>
-         <item><widget class="QCheckBox" name="chkTrainBatchAuto"><property name="text"><string>auto</string></property><property name="checked"><bool>true</bool></property></widget></item>
+         <item>
+          <widget class="QLabel" name="labelImgSz">
+           <property name="text">
+            <string>imgsz (W×H)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinTrainW">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>4096</number>
+           </property>
+           <property name="singleStep">
+            <number>32</number>
+           </property>
+           <property name="value">
+            <number>1280</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinTrainH">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>4096</number>
+           </property>
+           <property name="singleStep">
+            <number>16</number>
+           </property>
+           <property name="value">
+            <number>720</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelEpochs">
+           <property name="text">
+            <string>epochs</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinTrainEpochs">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>1000</number>
+           </property>
+           <property name="value">
+            <number>100</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelBatch">
+           <property name="text">
+            <string>batch</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinTrainBatch">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>1024</number>
+           </property>
+           <property name="value">
+            <number>16</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkTrainBatchAuto">
+           <property name="text">
+            <string>auto</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="trainButtons">
-         <item><widget class="QPushButton" name="btnTrainStart"><property name="text"><string>학습 시작</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnTrainStop"><property name="text"><string>중지</string></property></widget></item>
+         <item>
+          <widget class="QPushButton" name="btnTrainStart">
+           <property name="text">
+            <string>학습 시작</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnTrainStop">
+           <property name="text">
+            <string>중지</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
-       <item><widget class="QTextEdit" name="textTrainLog"><property name="readOnly"><bool>true</bool></property><property name="placeholderText"><string>학습 로그가 표시됩니다...</string></property></widget></item>
+       <item>
+        <widget class="QTextEdit" name="textTrainLog">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>학습 로그가 표시됩니다...</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
-
-     <!-- ===== Tab 5: 오토 라벨 (ultra 전용) ===== -->
      <widget class="QWidget" name="tabAutoLabel">
-      <attribute name="title"><string>오토 라벨</string></attribute>
+      <attribute name="title">
+       <string>오토 라벨</string>
+      </attribute>
       <layout class="QVBoxLayout" name="alLayout">
-       <item><widget class="QLabel" name="labelALPaths"><property name="text"><string>모델(.pt), 이미지 폴더, 저장 폴더를 선택하세요</string></property></widget></item>
-
+       <item>
+        <widget class="QLabel" name="labelALPaths">
+         <property name="text">
+          <string>모델(.pt), 이미지 폴더, 저장 폴더를 선택하세요</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <layout class="QHBoxLayout" name="alPathBtns">
-         <item><widget class="QPushButton" name="btnALModel"><property name="text"><string>모델 선택(.pt)</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnALImg"><property name="text"><string>이미지 폴더</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnALSave"><property name="text"><string>저장 폴더</string></property></widget></item>
+         <item>
+          <widget class="QPushButton" name="btnALModel">
+           <property name="text">
+            <string>모델 선택(.pt)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnALImg">
+           <property name="text">
+            <string>이미지 폴더</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnALSave">
+           <property name="text">
+            <string>저장 폴더</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
-
        <item>
         <layout class="QHBoxLayout" name="alControls1">
-         <item><widget class="QLabel" name="labelALImgSz"><property name="text"><string>imgsz (W×H)</string></property></widget></item>
-         <item><widget class="QSpinBox" name="spinALW"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="singleStep"><number>32</number></property><property name="value"><number>1280</number></property></widget></item>
-         <item><widget class="QSpinBox" name="spinALH"><property name="minimum"><number>64</number></property><property name="maximum"><number>4096</number></property><property name="singleStep"><number>16</number></property><property name="value"><number>720</number></property></widget></item>
-
-         <item><widget class="QLabel" name="labelALConf"><property name="text"><string>conf</string></property></widget></item>
-         <item><widget class="QDoubleSpinBox" name="doubleALConf"><property name="decimals"><number>2</number></property><property name="minimum"><double>0.00</double></property><property name="maximum"><double>1.00</double></property><property name="singleStep"><double>0.01</double></property><property name="value"><double>0.25</double></property></widget></item>
-
-         <item><widget class="QLabel" name="labelALIou"><property name="text"><string>iou</string></property></widget></item>
-         <item><widget class="QDoubleSpinBox" name="doubleALIou"><property name="decimals"><number>2</number></property><property name="minimum"><double>0.00</double></property><property name="maximum"><double>1.00</double></property><property name="singleStep"><double>0.01</double></property><property name="value"><double>0.45</double></property></widget></item>
+         <item>
+          <widget class="QLabel" name="labelALImgSz">
+           <property name="text">
+            <string>imgsz (W×H)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinALW">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>4096</number>
+           </property>
+           <property name="singleStep">
+            <number>32</number>
+           </property>
+           <property name="value">
+            <number>1280</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinALH">
+           <property name="minimum">
+            <number>64</number>
+           </property>
+           <property name="maximum">
+            <number>4096</number>
+           </property>
+           <property name="singleStep">
+            <number>16</number>
+           </property>
+           <property name="value">
+            <number>720</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelALConf">
+           <property name="text">
+            <string>conf</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleALConf">
+           <property name="decimals">
+            <number>2</number>
+           </property>
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.250000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelALIou">
+           <property name="text">
+            <string>iou</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleALIou">
+           <property name="decimals">
+            <number>2</number>
+           </property>
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.010000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.450000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelALApprox">
+           <property name="text">
+            <string>approx-eps(px)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleALApprox">
+           <property name="decimals">
+            <number>2</number>
+           </property>
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>1000.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.100000000000000</double>
+           </property>
+           <property name="value">
+            <double>0.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="labelALMinArea">
+           <property name="text">
+            <string>min-area(px²)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleALMinArea">
+           <property name="decimals">
+            <number>1</number>
+           </property>
+           <property name="minimum">
+            <double>0.000000000000000</double>
+           </property>
+           <property name="maximum">
+            <double>100000000.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>10.000000000000000</double>
+           </property>
+           <property name="value">
+            <double>50.000000000000000</double>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
-
        <item>
-        <layout class="QHBoxLayout" name="alControls2">
-         <item><widget class="QLabel" name="labelALApprox"><property name="text"><string>approx-eps(px)</string></property></widget></item>
-         <item><widget class="QDoubleSpinBox" name="doubleALApprox"><property name="decimals"><number>2</number></property><property name="minimum"><double>0.00</double></property><property name="maximum"><double>1000.00</double></property><property name="singleStep"><double>0.10</double></property><property name="value"><double>0.00</double></property></widget></item>
-
-         <item><widget class="QLabel" name="labelALMinArea"><property name="text"><string>min-area(px²)</string></property></widget></item>
-         <item><widget class="QDoubleSpinBox" name="doubleALMinArea"><property name="decimals"><number>1</number></property><property name="minimum"><double>0.0</double></property><property name="maximum"><double>100000000.0</double></property><property name="singleStep"><double>10.0</double></property><property name="value"><double>50.0</double></property></widget></item>
-
-         <item><spacer name="spacerAL"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property></spacer></item>
-        </layout>
+        <layout class="QHBoxLayout" name="alControls2"/>
        </item>
-
        <item>
         <layout class="QHBoxLayout" name="alControls3">
-         <item><widget class="QCheckBox" name="chkALViz"><property name="text"><string>viz 저장</string></property><property name="checked"><bool>false</bool></property></widget></item>
-         <item><widget class="QCheckBox" name="chkALCopy"><property name="text"><string>이미지 보관</string></property><property name="checked"><bool>false</bool></property></widget></item>
-         <item><widget class="QComboBox" name="comboALCopyMode"/></item>
-
-         <item><spacer name="spacerAL2"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>20</height></size></property></spacer></item>
+         <item>
+          <widget class="QCheckBox" name="chkALViz">
+           <property name="text">
+            <string>viz 저장</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkALCopy">
+           <property name="text">
+            <string>이미지 보관</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboALCopyMode"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnALRun">
+           <property name="text">
+            <string>오토 라벨 시작</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnALStop">
+           <property name="text">
+            <string>중지</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
-
        <item>
-        <layout class="QHBoxLayout" name="alControls4">
-         <item><widget class="QLabel" name="labelALDevice"><property name="text"><string>device</string></property></widget></item>
-         <item><widget class="QLineEdit" name="lineALDevice"><property name="placeholderText"><string>예: 0, 0,1 / cpu / mps (비우면 자동)</string></property></widget></item>
-
-         <item><widget class="QPushButton" name="btnALRun"><property name="text"><string>오토 라벨 시작</string></property></widget></item>
-         <item><widget class="QPushButton" name="btnALStop"><property name="text"><string>중지</string></property></widget></item>
-        </layout>
+        <layout class="QHBoxLayout" name="alControls4"/>
        </item>
-
-       <item><widget class="QProgressBar" name="progressAL"><property name="value"><number>0</number></property><property name="format"><string>%p%</string></property></widget></item>
-       <item><widget class="QTextEdit" name="textALLog"><property name="readOnly"><bool>true</bool></property><property name="placeholderText"><string>오토 라벨 로그가 표시됩니다...</string></property></widget></item>
+       <item>
+        <widget class="QProgressBar" name="progressAL">
+         <property name="value">
+          <number>0</number>
+         </property>
+         <property name="format">
+          <string>%p%</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextEdit" name="textALLog">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>오토 라벨 로그가 표시됩니다...</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
-
-    </widget> <!-- /QTabWidget -->
+    </widget>
    </item>
   </layout>
  </widget>

@@ -174,12 +174,11 @@ class MainWindow(QWidget):
         self.doubleALConf.setValue(0.25)
         self.doubleALIou.setValue(0.45)
         self.doubleALApprox.setValue(0.0)
-        self.doubleALMinArea.setValue(50.0)
-        self.chkALViz.setChecked(False)
-        self.chkALCopy.setChecked(False)
+        self.doubleALMinArea.setValue(2000.0)
+        self.chkALViz.setChecked(True)
+        self.chkALCopy.setChecked(True)
         self.comboALCopyMode.addItems(["copy", "hardlink", "symlink", "move"])
         self.comboALCopyMode.setCurrentText("copy")
-        self.lineALDevice.setText("")  # 빈 문자열이면 자동
         self.progressAL.setValue(0)
         self.textALLog.setReadOnly(True)
         self.textALLog.setPlaceholderText("오토 라벨 로그가 표시됩니다...")
@@ -621,7 +620,6 @@ class MainWindow(QWidget):
             getattr(self, "doubleALConf", None), getattr(self, "doubleALIou", None),
             getattr(self, "doubleALApprox", None), getattr(self, "doubleALMinArea", None),
             getattr(self, "chkALViz", None), getattr(self, "chkALCopy", None),
-            getattr(self, "comboALCopyMode", None), getattr(self, "lineALDevice", None),
         ]:
             if w:
                 w.setEnabled(not running)
@@ -653,7 +651,6 @@ class MainWindow(QWidget):
         viz = bool(self.chkALViz.isChecked())
         copy_img = bool(self.chkALCopy.isChecked())
         copy_mode = self.comboALCopyMode.currentText()
-        device = self.lineALDevice.text().strip() or None
 
         self.al_total = max(1, self._estimate_al_total())
         self.al_done = 0

@@ -5,6 +5,7 @@
 *.txt
 *.json
 *.cache
+*.pyc
 
 # 이미지 파일
 *.jpg
