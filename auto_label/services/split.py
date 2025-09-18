@@ -10,6 +10,7 @@ from typing import Iterable, Sequence
 
 from PyQt5.QtCore import QRunnable
 
+from ..core.config import DEFAULT_SPLIT_SEED, DEFAULT_VAL_RATIO
 from ..core.files import list_image_files
 from ..qt.signals import Signals
 
@@ -41,8 +42,8 @@ class DatasetSplitConfig:
         seed: 셔플 시드(None이면 비결정적).
     """
 
-    val_ratio: float = 0.2
-    seed: int | None = None
+    val_ratio: float = DEFAULT_VAL_RATIO
+    seed: int | None = DEFAULT_SPLIT_SEED
 
 
 def _strip_split_prefix(relative: Path) -> Path:

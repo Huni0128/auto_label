@@ -7,7 +7,19 @@ from pathlib import Path
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from ...core.config import IMG_EXTS
+from ...core.config import (
+    AUTO_LABEL_COPY_MODES,
+    AUTO_LABEL_DEFAULT_APPROX_EPS,
+    AUTO_LABEL_DEFAULT_CONF,
+    AUTO_LABEL_DEFAULT_COPY_IMAGES,
+    AUTO_LABEL_DEFAULT_COPY_MODE,
+    AUTO_LABEL_DEFAULT_DEVICE,
+    AUTO_LABEL_DEFAULT_IOU,
+    AUTO_LABEL_DEFAULT_MIN_AREA,
+    AUTO_LABEL_DEFAULT_VIZ,
+    IMG_EXTS,
+    TARGET_SIZE,
+)
 from ...qt.signals import Signals
 from ...services.auto_label import AutoLabelConfig, AutoLabelRunner
 from .common import ProgressTracker, append_log
@@ -45,8 +57,10 @@ class AutoLabelTabController:
         self.window.btnALStop.setEnabled(False)
 
         if hasattr(self.window, "comboALCopyMode"):
-            self.window.comboALCopyMode.addItems(["copy", "hardlink", "symlink", "move"])
-            self.window.comboALCopyMode.setCurrentText("copy")
+            self.window.comboALCopyMode.clear()
+            self.window.comboALCopyMode.addItems(list(AUTO_LABEL_COPY_MODES))
+            if AUTO_LABEL_DEFAULT_COPY_MODE in AUTO_LABEL_COPY_MODES:
+                self.window.comboALCopyMode.setCurrentText(AUTO_LABEL_DEFAULT_COPY_MODE)
 
     def _toggle_ui(self, running: bool) -> None:
         self.window.btnALModel.setEnabled(not running)
@@ -113,22 +127,60 @@ class AutoLabelTabController:
         self.window.textALLog.clear()
         self.window.progressAL.setValue(0)
 
-        imgsz_w = int(self.window.spinALW.value()) if hasattr(self.window, "spinALW") else 1280
-        imgsz_h = int(self.window.spinALH.value()) if hasattr(self.window, "spinALH") else 720
-        conf = float(self.window.doubleALConf.value()) if hasattr(self.window, "doubleALConf") else 0.25
-        iou = float(self.window.doubleALIou.value()) if hasattr(self.window, "doubleALIou") else 0.45
-        approx = float(self.window.doubleALApprox.value()) if hasattr(self.window, "doubleALApprox") else 0.0
-        min_area = float(self.window.doubleALMinArea.value()) if hasattr(self.window, "doubleALMinArea") else 2000.0
-        viz = bool(self.window.chkALViz.isChecked()) if hasattr(self.window, "chkALViz") else True
-        copy_img = bool(self.window.chkALCopy.isChecked()) if hasattr(self.window, "chkALCopy") else True
-        copy_mode = self.window.comboALCopyMode.currentText() if hasattr(self.window, "comboALCopyMode") else "copy"
+        imgsz_w = (
+            int(self.window.spinALW.value())
+            if hasattr(self.window, "spinALW")
+            else TARGET_SIZE[0]
+        )
+        imgsz_h = (
+            int(self.window.spinALH.value())
+            if hasattr(self.window, "spinALH")
+            else TARGET_SIZE[1]
+        )
+        conf = (
+            float(self.window.doubleALConf.value())
+            if hasattr(self.window, "doubleALConf")
+            else AUTO_LABEL_DEFAULT_CONF
+        )
+        iou = (
+            float(self.window.doubleALIou.value())
+            if hasattr(self.window, "doubleALIou")
+            else AUTO_LABEL_DEFAULT_IOU
+        )
+        approx = (
+            float(self.window.doubleALApprox.value())
+            if hasattr(self.window, "doubleALApprox")
+            else AUTO_LABEL_DEFAULT_APPROX_EPS
+        )
+        min_area = (
+            float(self.window.doubleALMinArea.value())
+            if hasattr(self.window, "doubleALMinArea")
+            else AUTO_LABEL_DEFAULT_MIN_AREA
+        )
+        viz = (
+            bool(self.window.chkALViz.isChecked())
+            if hasattr(self.window, "chkALViz")
+            else AUTO_LABEL_DEFAULT_VIZ
+        )
+        copy_img = (
+            bool(self.window.chkALCopy.isChecked())
+            if hasattr(self.window, "chkALCopy")
+            else AUTO_LABEL_DEFAULT_COPY_IMAGES
+        )
+        copy_mode = (
+            self.window.comboALCopyMode.currentText()
+            if hasattr(self.window, "comboALCopyMode")
+            else AUTO_LABEL_DEFAULT_COPY_MODE
+        )
+        device = AUTO_LABEL_DEFAULT_DEVICE
+        device_desc = device if device else "auto"
 
         self.progress.reset(max(1, self._estimate_total()))
         append_log(
             self.window.textALLog,
             "오토 라벨 시작 (ultra): "
             f"imgsz=({imgsz_w}x{imgsz_h}), conf={conf}, iou={iou}, approx-eps={approx}, min-area={min_area}, "
-            f"viz={viz}, copy_img={copy_img}({copy_mode}), device=auto  → 예상 {self.progress.total}장",
+            f"viz={viz}, copy_img={copy_img}({copy_mode}), device={device_desc}  → 예상 {self.progress.total}장",
         )
         self._toggle_ui(True)
 
@@ -140,7 +192,7 @@ class AutoLabelTabController:
             iou=iou,
             imgsz_w=imgsz_w,
             imgsz_h=imgsz_h,
-            device=None,
+            device=device,
             approx_eps=approx,
             min_area=min_area,
             viz=viz,

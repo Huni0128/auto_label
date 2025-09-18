@@ -16,6 +16,7 @@ from typing import Any, Iterable, Sequence
 from PIL import Image
 from PyQt5.QtCore import QRunnable
 
+from ..core.config import DEFAULT_VAL_RATIO, TARGET_SIZE
 from ..core.imaging import letterbox
 from ..qt.signals import Signals
 
@@ -31,8 +32,8 @@ class ConvertConfig:
         size: 리사이즈 타깃 (w, h) 또는 정수(정사각형).
         val_ratio: 검증 세트 비율(0~1).
     """
-    size: int | tuple[int, int] = (1280, 720)
-    val_ratio: float = 0.2
+    size: int | tuple[int, int] = TARGET_SIZE
+    val_ratio: float = DEFAULT_VAL_RATIO
 
 
 def _norm_xy_rect(x: float, y: float, out_w: int, out_h: int) -> tuple[float, float]:

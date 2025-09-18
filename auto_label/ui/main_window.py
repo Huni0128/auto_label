@@ -8,7 +8,21 @@ from PyQt5 import uic
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QWidget
 
-from ..core.config import MAX_THREADS_CAP, TARGET_SIZE
+from ..core.config import (
+    AUTO_LABEL_DEFAULT_APPROX_EPS,
+    AUTO_LABEL_DEFAULT_CONF,
+    AUTO_LABEL_DEFAULT_COPY_IMAGES,
+    AUTO_LABEL_DEFAULT_IOU,
+    AUTO_LABEL_DEFAULT_MIN_AREA,
+    AUTO_LABEL_DEFAULT_VIZ,
+    DEFAULT_SPLIT_SEED,
+    DEFAULT_VAL_RATIO,
+    MAX_THREADS_CAP,
+    TARGET_SIZE,
+    TRAIN_DEFAULT_BATCH,
+    TRAIN_DEFAULT_BATCH_AUTO,
+    TRAIN_DEFAULT_EPOCHS,
+)
 from .tabs.auto_label import AutoLabelTabController
 from .tabs.augment import AugmentationTabController
 from .tabs.convert import ConvertTabController
@@ -54,7 +68,7 @@ class MainWindow(QWidget):
         if hasattr(self, "spinCvH"):
             self.spinCvH.setValue(default_h)
         if hasattr(self, "doubleSpinValRatio"):
-            self.doubleSpinValRatio.setValue(0.20)
+            self.doubleSpinValRatio.setValue(DEFAULT_VAL_RATIO)
 
         if hasattr(self, "spinAugWidth"):
             self.spinAugWidth.setValue(default_w)
@@ -66,27 +80,29 @@ class MainWindow(QWidget):
         if hasattr(self, "spinTrainH"):
             self.spinTrainH.setValue(default_h)
         if hasattr(self, "spinTrainEpochs"):
-            self.spinTrainEpochs.setValue(100)
+            self.spinTrainEpochs.setValue(TRAIN_DEFAULT_EPOCHS)
         if hasattr(self, "spinTrainBatch"):
-            self.spinTrainBatch.setValue(16)
+            self.spinTrainBatch.setValue(TRAIN_DEFAULT_BATCH)
 
         if hasattr(self, "spinALW"):
             self.spinALW.setValue(default_w)
         if hasattr(self, "spinALH"):
             self.spinALH.setValue(default_h)
         if hasattr(self, "doubleALConf"):
-            self.doubleALConf.setValue(0.25)
+            self.doubleALConf.setValue(AUTO_LABEL_DEFAULT_CONF)
         if hasattr(self, "doubleALIou"):
-            self.doubleALIou.setValue(0.45)
+            self.doubleALIou.setValue(AUTO_LABEL_DEFAULT_IOU)
         if hasattr(self, "doubleALApprox"):
-            self.doubleALApprox.setValue(0.0)
+            self.doubleALApprox.setValue(AUTO_LABEL_DEFAULT_APPROX_EPS)
         if hasattr(self, "doubleALMinArea"):
-            self.doubleALMinArea.setValue(2000.0)
+            self.doubleALMinArea.setValue(AUTO_LABEL_DEFAULT_MIN_AREA)
         if hasattr(self, "chkALViz"):
-            self.chkALViz.setChecked(True)
+            self.chkALViz.setChecked(AUTO_LABEL_DEFAULT_VIZ)
         if hasattr(self, "chkALCopy"):
-            self.chkALCopy.setChecked(True)
+            self.chkALCopy.setChecked(AUTO_LABEL_DEFAULT_COPY_IMAGES)
         if hasattr(self, "doubleSpinSplitVal"):
-            self.doubleSpinSplitVal.setValue(0.20)
-        if hasattr(self, "spinSplitSeed"):
-            self.spinSplitSeed.setValue(42)
+            self.doubleSpinSplitVal.setValue(DEFAULT_VAL_RATIO)
+        if hasattr(self, "spinSplitSeed") and DEFAULT_SPLIT_SEED is not None:
+            self.spinSplitSeed.setValue(DEFAULT_SPLIT_SEED)
+        if hasattr(self, "chkTrainBatchAuto"):
+            self.chkTrainBatchAuto.setChecked(TRAIN_DEFAULT_BATCH_AUTO)

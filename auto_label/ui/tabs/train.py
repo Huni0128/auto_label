@@ -6,6 +6,12 @@ from pathlib import Path
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
+from ...core.config import (
+    TARGET_SIZE,
+    TRAIN_DEFAULT_BATCH,
+    TRAIN_DEFAULT_BATCH_AUTO,
+    TRAIN_DEFAULT_EPOCHS,
+)
 from ...qt.signals import Signals
 from ...services.train import TrainConfig, TrainRunner
 from .common import append_log
@@ -35,9 +41,10 @@ class TrainTabController:
         self.window.btnTrainStop.setEnabled(False)
 
         if hasattr(self.window, "chkTrainBatchAuto"):
-            self.window.chkTrainBatchAuto.setChecked(True)
+            self.window.chkTrainBatchAuto.setChecked(TRAIN_DEFAULT_BATCH_AUTO)
             self.window.chkTrainBatchAuto.stateChanged.connect(self._toggle_batch_auto)
-            self.window.spinTrainBatch.setEnabled(False)
+            if hasattr(self.window, "spinTrainBatch"):
+                self.window.spinTrainBatch.setEnabled(not TRAIN_DEFAULT_BATCH_AUTO)
 
     def _toggle_batch_auto(self) -> None:
         if hasattr(self.window, "chkTrainBatchAuto") and hasattr(self.window, "spinTrainBatch"):
@@ -88,19 +95,49 @@ class TrainTabController:
         self.stop_event.clear()
         self.window.textTrainLog.clear()
 
-        imgsz_w = int(self.window.spinTrainW.value()) if hasattr(self.window, "spinTrainW") else 1280
-        imgsz_h = int(self.window.spinTrainH.value()) if hasattr(self.window, "spinTrainH") else 720
-        epochs = int(self.window.spinTrainEpochs.value()) if hasattr(self.window, "spinTrainEpochs") else 100
-        if hasattr(self.window, "chkTrainBatchAuto") and self.window.chkTrainBatchAuto.isChecked():
+        imgsz_w = (
+            int(self.window.spinTrainW.value())
+            if hasattr(self.window, "spinTrainW")
+            else TARGET_SIZE[0]
+        )
+        imgsz_h = (
+            int(self.window.spinTrainH.value())
+            if hasattr(self.window, "spinTrainH")
+            else TARGET_SIZE[1]
+        )
+        epochs = (
+            int(self.window.spinTrainEpochs.value())
+            if hasattr(self.window, "spinTrainEpochs")
+            else TRAIN_DEFAULT_EPOCHS
+        )
+
+        auto_batch_enabled = (
+            hasattr(self.window, "chkTrainBatchAuto")
+            and self.window.chkTrainBatchAuto.isChecked()
+        )
+        if not hasattr(self.window, "chkTrainBatchAuto"):
+            auto_batch_enabled = TRAIN_DEFAULT_BATCH_AUTO
+
+        if auto_batch_enabled:
             batch = -1
         else:
-            batch = int(self.window.spinTrainBatch.value()) if hasattr(self.window, "spinTrainBatch") else 16
+            batch = (
+                int(self.window.spinTrainBatch.value())
+                if hasattr(self.window, "spinTrainBatch")
+                else TRAIN_DEFAULT_BATCH
+            )
 
         workdir = self.data_path.resolve().parent
 
+        batch_desc = "auto" if batch == -1 else batch
+        
         append_log(
             self.window.textTrainLog,
-            f"학습 시작: model={self.model_path}, data={self.data_path}, imgsz=({imgsz_w}x{imgsz_h}), epochs={epochs}, batch={batch}",
+            (
+                "학습 시작: "
+                f"model={self.model_path}, data={self.data_path}, "
+                f"imgsz=({imgsz_w}x{imgsz_h}), epochs={epochs}, batch={batch_desc}"
+            ),
         )
         self._toggle_ui(True)
 

@@ -19,7 +19,7 @@ import cv2
 import numpy as np
 from PyQt5.QtCore import QRunnable
 
-from ..core.config import AUGMENT_RESOLUTION, IMG_EXTS
+from ..core.config import AUGMENT_MIN_POLYGON_AREA, AUGMENT_RESOLUTION, IMG_EXTS
 from ..core.polygons import flatten_polygons, sanitize_polygon
 from ..qt.signals import Signals
 
@@ -35,7 +35,7 @@ class AugmentationConfig:
         target_height: 증강 결과 이미지 높이.
     """
     multiplier: int
-    min_polygon_area: float = 5.0
+    min_polygon_area: float = AUGMENT_MIN_POLYGON_AREA
     target_width: int = AUGMENT_RESOLUTION[0]
     target_height: int = AUGMENT_RESOLUTION[1]
 

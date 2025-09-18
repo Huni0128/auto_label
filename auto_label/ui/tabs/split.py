@@ -7,7 +7,7 @@ from typing import List
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from ...core.config import LOG_EVERY_N
+from ...core.config import DEFAULT_SPLIT_SEED, DEFAULT_VAL_RATIO, LOG_EVERY_N
 from ...qt.signals import Signals
 from ...services.split import (
     DatasetEntry,
@@ -140,7 +140,11 @@ class DatasetSplitTabController:
 
     def _update_summary(self) -> None:
         total = len(self.items)
-        ratio = float(self.window.doubleSpinSplitVal.value()) if hasattr(self.window, "doubleSpinSplitVal") else 0.0
+        ratio = (
+            float(self.window.doubleSpinSplitVal.value())
+            if hasattr(self.window, "doubleSpinSplitVal")
+            else DEFAULT_VAL_RATIO
+        )
         val_estimate = min(total, int(round(total * ratio)))
         train_estimate = total - val_estimate
 
@@ -202,8 +206,17 @@ class DatasetSplitTabController:
             if reply != QMessageBox.Yes:
                 return
 
-        ratio = float(self.window.doubleSpinSplitVal.value())
-        seed = int(self.window.spinSplitSeed.value())
+        if hasattr(self.window, "doubleSpinSplitVal"):
+            ratio = float(self.window.doubleSpinSplitVal.value())
+        else:
+            ratio = DEFAULT_VAL_RATIO
+
+        if DEFAULT_SPLIT_SEED is None:
+            seed = None
+        elif hasattr(self.window, "spinSplitSeed"):
+            seed = int(self.window.spinSplitSeed.value())
+        else:
+            seed = DEFAULT_SPLIT_SEED
         config = DatasetSplitConfig(val_ratio=ratio, seed=seed)
 
         output_dir = self.output_dir or self.dataset_dir

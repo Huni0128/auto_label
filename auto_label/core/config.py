@@ -34,6 +34,14 @@ IMG_EXTS: Final[set[str]] = {
     ext.lower() for ext in VALID_EXTS if not ext.endswith("gif")
 } | {".gif"}
 
+# === 데이터셋 기본 설정 ===
+# 공통 검증 세트 비율 (0~1)
+DEFAULT_VAL_RATIO: Final[float] = 0.20
+
+# 데이터셋 분할 시 기본 난수 시드 (None이면 비결정적)
+DEFAULT_SPLIT_SEED: Final[int | None] = 42
+
+
 # === 스레딩 / 로깅 설정 ===
 # 작업자 스레드 상한
 MAX_THREADS_CAP: Final[int] = 32
@@ -54,3 +62,29 @@ SAVE_JPEG_SPEED_PARAMS: Final[dict[str, int | bool]] = {
 # === 증강(augmentation) 관련 ===
 # Albumentations 등 증강 파이프라인의 기본 타깃 해상도
 AUGMENT_RESOLUTION: Final[tuple[int, int]] = TARGET_SIZE
+
+# 최소 폴리곤 면적 기본값 (LabelMe 증강 필터링 용도)
+AUGMENT_MIN_POLYGON_AREA: Final[float] = 5.0
+
+# === 학습 관련 기본값 ===
+TRAIN_DEFAULT_EPOCHS: Final[int] = 100
+TRAIN_DEFAULT_BATCH: Final[int] = 16
+TRAIN_DEFAULT_BATCH_AUTO: Final[bool] = True
+
+# === 오토 라벨링 기본값 ===
+AUTO_LABEL_DEFAULT_CONF: Final[float] = 0.25
+AUTO_LABEL_DEFAULT_IOU: Final[float] = 0.45
+AUTO_LABEL_DEFAULT_APPROX_EPS: Final[float] = 0.0
+AUTO_LABEL_DEFAULT_MIN_AREA: Final[float] = 2000.0
+AUTO_LABEL_DEFAULT_VIZ: Final[bool] = True
+AUTO_LABEL_DEFAULT_COPY_IMAGES: Final[bool] = True
+AUTO_LABEL_DEFAULT_COPY_MODE: Final[str] = "copy"
+AUTO_LABEL_COPY_MODES: Final[tuple[str, ...]] = (
+    "copy",
+    "hardlink",
+    "symlink",
+    "move",
+)
+
+# 기본 추론 디바이스(None이면 자동 선택)
+AUTO_LABEL_DEFAULT_DEVICE: Final[str | None] = None
