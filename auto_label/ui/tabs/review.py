@@ -43,11 +43,10 @@ class LabelReviewTabController:
     def __init__(self, window, thread_pool, model_path: Path | None = None) -> None:
         self.window = window
         self.pool = thread_pool
-        self.model_path = model_path
+        self.model_path: Path | None = None
 
         # YOLO .pt의 names 자동 로드 (실패 시 빈 리스트 → 숫자 ID 표기)
         self.class_names: list[str] = []
-        self._maybe_load_class_names_from_model()
 
         self.image_dir: Path | None = None
         self.label_dir: Path | None = None
@@ -58,7 +57,6 @@ class LabelReviewTabController:
         self.current_index: int = -1
 
         self.window.labelReviewPaths.setAlignment(Qt.AlignLeft)
-        self._update_paths_label()
         self.window.labelReviewStatus.setText("0/0 · 정상 표시 0 · 미분류 0")
         self.window.labelReviewInfo.setText("검수할 파일을 불러오세요.")
         self.window.labelReviewImage.setAlignment(Qt.AlignCenter)
@@ -66,6 +64,8 @@ class LabelReviewTabController:
         self.window.textReviewLog.setReadOnly(True)
         self.window.textReviewLog.setPlaceholderText("검수 로그가 표시됩니다...")
 
+        if hasattr(self.window, "btnReviewModel"):
+            self.window.btnReviewModel.clicked.connect(self._select_model)
         self.window.btnReviewImages.clicked.connect(self._select_images)
         self.window.btnReviewLabels.clicked.connect(self._select_labels)
         self.window.btnReviewGood.clicked.connect(self._select_good_dir)
@@ -86,6 +86,7 @@ class LabelReviewTabController:
         self.shortcut_toggle.setContext(Qt.WidgetWithChildrenShortcut)
         self.shortcut_toggle.activated.connect(self._toggle_good_shortcut)
 
+        self.set_model_path(model_path, notify_auto_label=False, log=False)
         self._update_controls()
 
     # UI helpers --------------------------------------------------------------
@@ -101,6 +102,7 @@ class LabelReviewTabController:
         def fmt(path: Path | None) -> str:
             return str(path) if path else "(미선택)"
         lines = [
+            f"모델: {fmt(self.model_path)}",
             f"이미지: {fmt(self.image_dir)}",
             f"라벨: {fmt(self.label_dir)}",
             f"정상 폴더: {fmt(self.good_dir)}",
@@ -141,6 +143,17 @@ class LabelReviewTabController:
         self._update_controls()
 
     # Directory selection -----------------------------------------------------
+    def _select_model(self) -> None:
+        file_name, _ = QFileDialog.getOpenFileName(
+            self.window,
+            "모델(.pt) 선택",
+            "",
+            "PyTorch Model (*.pt);;All Files (*)",
+        )
+        if not file_name:
+            return
+        self.set_model_path(Path(file_name))
+
     def _select_images(self) -> None:
         directory = QFileDialog.getExistingDirectory(self.window, "이미지 폴더 선택")
         if not directory:
@@ -284,23 +297,62 @@ class LabelReviewTabController:
         self._update_controls()
 
     # --- Class names from YOLO ----------------------------------------------
-    def _maybe_load_class_names_from_model(self) -> None:
+    def set_model_path(
+        self,
+        model_path: Path | None,
+        *,
+        notify_auto_label: bool = True,
+        log: bool = True,
+    ) -> None:
+        new_path = Path(model_path) if model_path is not None else None
+        changed = new_path != self.model_path
+        self.model_path = new_path
+
+        success, error_message = self._maybe_load_class_names_from_model()
+
+        if log and (changed or self.model_path is None):
+            if self.model_path is None:
+                self._log("[MODEL] 모델 선택이 해제되었습니다.")
+            else:
+                self._log(f"[MODEL] 모델 선택: {self.model_path}")
+                if success:
+                    self._log(f"[MODEL] 클래스명 {len(self.class_names)}건을 불러왔습니다.")
+                else:
+                    message = error_message or "클래스명을 불러올 수 없습니다."
+                    self._log(f"[WARN] {message}")
+
+        self._update_paths_label()
+
+        if notify_auto_label and hasattr(self.window, "auto_label_tab"):
+            self.window.auto_label_tab.set_model_path(new_path, notify_review=False)
+
+        self._show_current_image()
+
+    def _maybe_load_class_names_from_model(self) -> tuple[bool, str | None]:
         """ultralytics YOLO .pt의 names를 읽어 class_names에 채운다."""
-        if self.model_path is None or YOLO is None:
-            return
+        self.class_names = []
+
+        if self.model_path is None:
+            return False, None
+
+        if YOLO is None:
+            return False, "ultralytics 패키지를 찾을 수 없어 클래스명을 불러오지 못했습니다."
         try:
             model = YOLO(str(self.model_path))
-            names = getattr(model, "names", None)
-            if isinstance(names, dict):
-                # 키를 정렬하여 index 순으로 리스트화
-                self.class_names = [names[k] for k in sorted(names.keys())]
-            elif isinstance(names, list):
-                self.class_names = names
-            else:
-                self.class_names = []
-        except Exception:
-            # 실패 시 숫자 ID로 폴백
+        except Exception as exc:
+            return False, f"모델 로드 실패: {exc}"
+
+        names = getattr(model, "names", None)
+        if isinstance(names, dict):
+            self.class_names = [str(names[k]) for k in sorted(names.keys())]
+        elif isinstance(names, list):
+            self.class_names = [str(name) for name in names]
+        else:
             self.class_names = []
+
+        if self.class_names:
+            return True, None
+        return False, "모델에 클래스명이 정의되어 있지 않습니다."
 
     def _name_for_class(self, cls_id: int) -> str:
         """cls_id에 해당하는 표시 이름을 반환 (없으면 숫자 ID 문자열)."""

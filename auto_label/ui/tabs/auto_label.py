@@ -88,7 +88,7 @@ class AutoLabelTabController:
         file_name, _ = QFileDialog.getOpenFileName(self.window, "모델(.pt) 선택", "", "PyTorch Model (*.pt);;All Files (*)")
         if not file_name:
             return
-        self.model_path = Path(file_name)
+        self.set_model_path(Path(file_name))
         self._update_label()
 
     def _select_image_dir(self) -> None:
@@ -112,6 +112,19 @@ class AutoLabelTabController:
         self.window.labelALPaths.setText(f"모델: {model_txt}\n이미지: {img_txt}\n저장: {save_txt}")
         can_run = bool(self.model_path and self.image_dir and self.output_dir)
         self.window.btnALRun.setEnabled(can_run and not self.window.btnALStop.isEnabled())
+
+    def set_model_path(
+        self,
+        model_path: Path | None,
+        *,
+        notify_review: bool = True,
+    ) -> None:
+        new_path = Path(model_path) if model_path is not None else None
+        self.model_path = new_path
+        self._update_label()
+
+        if notify_review and hasattr(self.window, "review_tab"):
+            self.window.review_tab.set_model_path(new_path, notify_auto_label=False)
 
     def _estimate_total(self) -> int:
         if not self.image_dir:

@@ -845,7 +845,7 @@
        <item>
         <widget class="QLabel" name="labelReviewPaths">
          <property name="text">
-          <string>이미지/라벨 폴더와 분리 저장 폴더를 선택하세요.</string>
+          <string>모델(.pt), 이미지/라벨 폴더와 분리 저장 폴더를 선택하세요.</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -854,6 +854,13 @@
        </item>
        <item>
         <layout class="QHBoxLayout" name="reviewPathBtns">
+         <item>
+          <widget class="QPushButton" name="btnReviewModel">
+           <property name="text">
+            <string>모델 (.pt)</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QPushButton" name="btnReviewImages">
            <property name="text">
