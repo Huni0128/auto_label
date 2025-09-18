@@ -2,35 +2,27 @@
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import Iterable, Sequence
 
 import cv2
 import numpy as np
 
-BIN_LO = 0.8
-BIN_STEP = 0.2
-BIN_TOP = 0.95
 
-
-def score_to_bucket(score: float) -> str:
-    """신뢰도 점수를 구간 버킷 문자열로 변환합니다.
+def score_to_bucket(score: float, threshold: float = 0.60) -> str:
+    """신뢰도 점수를 지정된 임계값 기준 버킷 문자열로 변환합니다.
 
     Args:
         score: 0~1 범위 신뢰도 점수.
+        threshold: 기준으로 사용할 confidence 임계값.
 
     Returns:
-        "lt_0.60", "0.60_0.65", ..., "ge_0.95" 형태의 버킷 라벨.
+        점수가 임계값 이상이면 ``"high_<threshold>"``,
+        그렇지 않으면 ``"low_<threshold>"`` 형태의 버킷 라벨.
     """
-    if score < BIN_LO:
-        return "lt_0.60"
-    if score >= BIN_TOP:
-        return "ge_0.95"
-    k = int(math.floor((score - BIN_LO) / BIN_STEP))
-    start = BIN_LO + k * BIN_STEP
-    end = start + BIN_STEP
-    return f"{start:.2f}_{end:.2f}"
+    threshold = float(threshold)
+    suffix = f"{threshold:.2f}"
+    return f"high_{suffix}" if score >= threshold else f"low_{suffix}"
 
 
 def to_labelme_shapes(

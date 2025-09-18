@@ -96,12 +96,17 @@ class AutoLabelRunner(QRunnable):
         self.config = config
         self.stop_event = stop_event
         self.signals = signals
+        self.bucket_threshold = float(config.conf)
 
     # ------------------------------------------------------------------ utils
     def _emit(self, ok: bool, message: str) -> None:
         """UI로 진행/결과 메시지를 전송합니다."""
         if self.signals:
             self.signals.one_done.emit(ok, message)
+
+    def _bucket_label(self, score: float) -> str:
+        """config confidence 기준 버킷 라벨을 반환합니다."""
+        return score_to_bucket(score, self.bucket_threshold)
 
     def _ensure_model(self):
         """Ultralytics YOLO 모델을 로드합니다."""
@@ -254,7 +259,7 @@ class AutoLabelRunner(QRunnable):
         elapsed_ms: float | None = None,
     ) -> None:
         """세그먼트가 없을 때 빈 yolo-seg txt와 선택적 시각화를 저장합니다."""
-        bucket = "lt_0.60"
+        bucket = self._bucket_label(float("-inf"))
         txt_dir = self.config.save_root / bucket / "yolo-seg"
         viz_dir = self.config.save_root / bucket / "viz"
         txt_path = txt_dir / f"{image_path.stem}.txt"
@@ -304,7 +309,7 @@ class AutoLabelRunner(QRunnable):
             float(shape.get("flags", {}).get("score", 1.0)) for shape in shapes
         ]
         aggregate = min(scores) if scores else 1.0
-        bucket = score_to_bucket(aggregate)
+        bucket = self._bucket_label(aggregate)
 
         txt_dir = self.config.save_root / bucket / "yolo-seg"
         viz_dir = self.config.save_root / bucket / "viz"

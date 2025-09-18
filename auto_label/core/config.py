@@ -72,7 +72,7 @@ TRAIN_DEFAULT_BATCH: Final[int] = 16
 TRAIN_DEFAULT_BATCH_AUTO: Final[bool] = True
 
 # === 오토 라벨링 기본값 ===
-AUTO_LABEL_DEFAULT_CONF: Final[float] = 0.25
+AUTO_LABEL_DEFAULT_CONF: Final[float] = 0.8
 AUTO_LABEL_DEFAULT_IOU: Final[float] = 0.45
 AUTO_LABEL_DEFAULT_APPROX_EPS: Final[float] = 0.0
 AUTO_LABEL_DEFAULT_MIN_AREA: Final[float] = 2000.0
