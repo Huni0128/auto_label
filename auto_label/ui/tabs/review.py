@@ -15,11 +15,16 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QShortcut
 from ...core.files import copy_file, list_image_files
 from .common import append_log
 
+# YOLO 모델의 names를 읽어오기 위한 선택적 의존성
+try:
+    from ultralytics import YOLO
+except ImportError:
+    YOLO = None
+
 
 @dataclass
 class ReviewItem:
     """Represents an image/label pair being reviewed."""
-
     image: Path
     label: Path
     relative: Path
@@ -30,20 +35,19 @@ class ReviewItem:
 class LabelReviewTabController:
     """UI controller that lets users inspect and sort YOLO-Seg labels."""
 
+    # 참고: 색상은 _colour_for_class()에서 항상 빨강으로 고정합니다.
     COLOUR_TABLE: Sequence[tuple[int, int, int]] = (
-        (0, 255, 0),
-        (255, 0, 0),
-        (0, 128, 255),
-        (255, 128, 0),
-        (128, 0, 255),
-        (0, 255, 255),
-        (255, 0, 255),
-        (128, 255, 0),
+        (0, 0, 255),  # red (BGR) - 호환을 위해 남겨둠
     )
 
-    def __init__(self, window, thread_pool) -> None:
+    def __init__(self, window, thread_pool, model_path: Path | None = None) -> None:
         self.window = window
         self.pool = thread_pool
+        self.model_path = model_path
+
+        # YOLO .pt의 names 자동 로드 (실패 시 빈 리스트 → 숫자 ID 표기)
+        self.class_names: list[str] = []
+        self._maybe_load_class_names_from_model()
 
         self.image_dir: Path | None = None
         self.label_dir: Path | None = None
@@ -96,7 +100,6 @@ class LabelReviewTabController:
     def _update_paths_label(self) -> None:
         def fmt(path: Path | None) -> str:
             return str(path) if path else "(미선택)"
-
         lines = [
             f"이미지: {fmt(self.image_dir)}",
             f"라벨: {fmt(self.label_dir)}",
@@ -109,21 +112,13 @@ class LabelReviewTabController:
         total = len(self.items)
         good = sum(1 for item in self.items if item.is_good)
         remaining = total - good
-        if total > 0 and 0 <= self.current_index < total:
-            position = f"{self.current_index + 1}/{total}"
-        else:
-            position = "0/0"
-
-        self.window.labelReviewStatus.setText(
-            f"{position} · 정상 표시 {good} · 미분류 {remaining}"
-        )
+        position = f"{self.current_index + 1}/{total}" if total > 0 and 0 <= self.current_index < total else "0/0"
+        self.window.labelReviewStatus.setText(f"{position} · 정상 표시 {good} · 미분류 {remaining}")
 
         current = self._current_item()
         if current:
             state = "정상" if current.is_good else "미분류"
-            self.window.labelReviewInfo.setText(
-                f"파일: {current.relative.as_posix()} · 상태: {state}"
-            )
+            self.window.labelReviewInfo.setText(f"파일: {current.relative.as_posix()} · 상태: {state}")
         else:
             self.window.labelReviewInfo.setText("검수할 파일을 불러오세요.")
 
@@ -131,11 +126,9 @@ class LabelReviewTabController:
         has_items = bool(self.items)
         self.window.btnReviewPrev.setEnabled(has_items and self.current_index > 0)
         self.window.btnReviewNext.setEnabled(has_items and self.current_index < len(self.items) - 1)
-
         current = self._current_item()
         self.window.btnReviewMarkGood.setEnabled(bool(current and not current.is_good))
         self.window.btnReviewClearGood.setEnabled(bool(current and current.is_good))
-
         can_finalize = has_items and self.good_dir and self.bad_dir
         self.window.btnReviewFinalize.setEnabled(bool(can_finalize))
 
@@ -290,6 +283,31 @@ class LabelReviewTabController:
         self._update_status_labels()
         self._update_controls()
 
+    # --- Class names from YOLO ----------------------------------------------
+    def _maybe_load_class_names_from_model(self) -> None:
+        """ultralytics YOLO .pt의 names를 읽어 class_names에 채운다."""
+        if self.model_path is None or YOLO is None:
+            return
+        try:
+            model = YOLO(str(self.model_path))
+            names = getattr(model, "names", None)
+            if isinstance(names, dict):
+                # 키를 정렬하여 index 순으로 리스트화
+                self.class_names = [names[k] for k in sorted(names.keys())]
+            elif isinstance(names, list):
+                self.class_names = names
+            else:
+                self.class_names = []
+        except Exception:
+            # 실패 시 숫자 ID로 폴백
+            self.class_names = []
+
+    def _name_for_class(self, cls_id: int) -> str:
+        """cls_id에 해당하는 표시 이름을 반환 (없으면 숫자 ID 문자열)."""
+        if 0 <= cls_id < len(self.class_names):
+            return str(self.class_names[cls_id])
+        return str(cls_id)
+
     def _build_pixmap(self, item: ReviewItem) -> QPixmap | None:
         try:
             with Image.open(item.image) as im:
@@ -313,28 +331,17 @@ class LabelReviewTabController:
                 continue
             colour = self._colour_for_class(cls_id)
             cv2.polylines(canvas, [pts_int], True, colour, 2)
+
+            # 라벨 텍스트(클래스명)
             x, y = pts_int[0]
-            label = str(cls_id)
+            label = self._name_for_class(cls_id)
             (text_w, text_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 1)
             box_x = int(max(0, min(x, canvas.shape[1] - text_w - 6)))
             box_y = int(max(text_h + 4, min(y, canvas.shape[0] - 2)))
-            cv2.rectangle(
-                canvas,
-                (box_x, box_y - text_h - 4),
-                (box_x + text_w + 4, box_y),
-                colour,
-                -1,
-            )
-            cv2.putText(
-                canvas,
-                label,
-                (box_x + 2, box_y - 2),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (0, 0, 0),
-                1,
-                cv2.LINE_AA,
-            )
+
+            # 라벨 배경 + 텍스트
+            cv2.rectangle(canvas, (box_x, box_y - text_h - 4), (box_x + text_w + 4, box_y), colour, -1)
+            cv2.putText(canvas, label, (box_x + 2, box_y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1, cv2.LINE_AA)
 
         rgb = cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB)
         height, width, _ = rgb.shape
@@ -389,6 +396,7 @@ class LabelReviewTabController:
                 warnings.append(f"{line_no}행: 유효한 폴리곤이 아닙니다.")
                 continue
 
+            # YOLO-SEG 정규화 좌표 → 픽셀 좌표로 변환
             pts[:, 0] = np.clip(pts[:, 0] * width, 0, max(width - 1, 0))
             pts[:, 1] = np.clip(pts[:, 1] * height, 0, max(height - 1, 0))
 
@@ -401,8 +409,8 @@ class LabelReviewTabController:
         return polygons, classes, warnings
 
     def _colour_for_class(self, cls_id: int) -> tuple[int, int, int]:
-        table = self.COLOUR_TABLE
-        return table[cls_id % len(table)]
+        """항상 빨강(BGR)으로 그립니다."""
+        return (0, 0, 255)
 
     # Export ------------------------------------------------------------------
     def _finalize(self) -> None:
@@ -422,10 +430,7 @@ class LabelReviewTabController:
         reply = QMessageBox.question(
             self.window,
             "폴더 분리",
-            (
-                f"정상 {good_count}건, 이상 {bad_count}건을 각각의 폴더로 복사합니다.\n"
-                "계속할까요?"
-            ),
+            (f"정상 {good_count}건, 이상 {bad_count}건을 각각의 폴더로 복사합니다.\n계속할까요?"),
         )
         if reply != QMessageBox.Yes:
             return
@@ -446,14 +451,6 @@ class LabelReviewTabController:
         self._log(f"[DONE] 이상 {bad_count}건 → {self.bad_dir}")
 
         if errors:
-            QMessageBox.warning(
-                self.window,
-                "분리 완료 (일부 실패)",
-                f"복사 중 {errors}건의 오류가 발생했습니다. 로그를 확인하세요.",
-            )
+            QMessageBox.warning(self.window, "분리 완료 (일부 실패)", f"복사 중 {errors}건의 오류가 발생했습니다. 로그를 확인하세요.")
         else:
-            QMessageBox.information(
-                self.window,
-                "분리 완료",
-                f"정상 {good_count}건 / 이상 {bad_count}건으로 분리했습니다.",
-            )
+            QMessageBox.information(self.window, "분리 완료", f"정상 {good_count}건 / 이상 {bad_count}건으로 분리했습니다.")
