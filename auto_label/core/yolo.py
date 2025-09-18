@@ -9,8 +9,8 @@ from typing import Iterable, Sequence
 import cv2
 import numpy as np
 
-BIN_LO = 0.60
-BIN_STEP = 0.05
+BIN_LO = 0.8
+BIN_STEP = 0.2
 BIN_TOP = 0.95
 
 

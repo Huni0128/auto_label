@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Sequence
 
+import time
 import cv2
 import numpy as np
 from PIL import Image
@@ -124,6 +125,7 @@ class AutoLabelRunner(QRunnable):
         1) 입력 이미지 목록 수집
         2) YOLO 모델 로드 및 클래스 이름 획득
         3) 각 이미지에 대해 추론/후처리/저장
+        4) 처리 시간(ms) 측정 및 전체 집계
         """
         try:
             images = list_image_files(self.config.image_root)
@@ -149,11 +151,18 @@ class AutoLabelRunner(QRunnable):
             return
 
         total = len(images)
+        overall_start = time.perf_counter()
+
         for index, image_path in enumerate(images, 1):
+            # ---------------------------- 시간 측정 시작(엔드-투-엔드)
+            t0 = time.perf_counter()
+
+            # ---------------------------- 사용자 중지 요청 확인
             if self.stop_event.is_set():
                 self._emit(False, "[STOP] 사용자 중지 요청")
                 break
 
+            # ---------------------------- 이미지 열기
             try:
                 with Image.open(image_path) as image:
                     width, height = image.size
@@ -161,6 +170,7 @@ class AutoLabelRunner(QRunnable):
                 self._emit(False, f"[{image_path.name}] 이미지 열기 실패: {exc}")
                 continue
 
+            # ---------------------------- 모델 추론
             try:
                 predictions = model.predict(
                     source=str(image_path),
@@ -174,19 +184,11 @@ class AutoLabelRunner(QRunnable):
                 self._emit(False, f"[{image_path.name}] 예측 실패: {exc}")
                 continue
 
-            if not predictions:
-                self._handle_no_prediction(image_path, index, total)
-                continue
-
-            result = predictions[0]
+            result = predictions[0] if predictions else None
             shapes: List[dict[str, Any]] = []
 
-            # 마스크가 존재할 때만 폴리곤 생성 로직 수행
-            if (
-                getattr(result, "masks", None) is not None
-                and result.masks
-                and result.masks.data is not None
-            ):
+            # ---------------------------- 마스크 후처리
+            if result and getattr(result, "masks", None) is not None and result.masks.data is not None:
                 mask_count = int(result.masks.data.shape[0])
 
                 cls_ids = (
@@ -210,9 +212,7 @@ class AutoLabelRunner(QRunnable):
                     )
 
                     polygons = get_ultra_segments(
-                        result,
-                        i,
-                        approx_eps=float(self.config.approx_eps),
+                        result, i, approx_eps=float(self.config.approx_eps)
                     )
                     if not polygons:
                         continue
@@ -220,25 +220,27 @@ class AutoLabelRunner(QRunnable):
                     clipped = [clip_points(poly, width, height) for poly in polygons]
                     shapes.extend(
                         to_labelme_shapes(
-                            clipped,
-                            label,
-                            class_id,
-                            score,
-                            float(self.config.min_area),
+                            clipped, label, class_id, score, float(self.config.min_area)
                         )
                     )
 
+            # ---------------------------- 시간 측정 종료(저장까지 포함된 엔드-투-엔드로 보기 위해 emit은 헬퍼에서 한다)
+            t1 = time.perf_counter()
+            elapsed_ms = (t1 - t0) * 1000.0  # 이 이미지 1장 처리에 걸린 총 시간(ms)
+
+            # ---------------------------- 결과 저장 + "기존 로그 형식"으로 emit (옆에 time=XX.XX ms 추가)
             if shapes:
-                self._save_with_shapes(
-                    image_path,
-                    width,
-                    height,
-                    shapes,
-                    index,
-                    total,
-                )
+                self._save_with_shapes(image_path, width, height, shapes, index, total, elapsed_ms)
             else:
-                self._handle_no_prediction(image_path, index, total)
+                self._handle_no_prediction(image_path, index, total, elapsed_ms)
+
+        # ---------------------------- 전체 처리 시간 요약
+        overall_end = time.perf_counter()
+        total_s = overall_end - overall_start
+        self._emit(
+            True,
+            f"[SUMMARY] 총 {total}장 처리, 전체 시간 {total_s:.2f} s, 평균 {total_s*1000/total:.2f} ms/장",
+        )
 
         if self.signals:
             self.signals.all_done.emit()
@@ -249,6 +251,7 @@ class AutoLabelRunner(QRunnable):
         image_path: Path,
         index: int | None = None,
         total: int | None = None,
+        elapsed_ms: float | None = None,
     ) -> None:
         """세그먼트가 없을 때 빈 yolo-seg txt와 선택적 시각화를 저장합니다."""
         bucket = "lt_0.60"
@@ -280,10 +283,10 @@ class AutoLabelRunner(QRunnable):
             if index is not None and total is not None
             else ""
         )
+        time_sfx = f" time={elapsed_ms:.2f} ms" if elapsed_ms is not None else ""
         self._emit(
             True,
-            f"[{image_path.name}] segments=0 -> bin={bucket} "
-            f"-> SAVE empty .txt{progress}",
+            f"[{image_path.name}] segments=0 -> bin={bucket} -> SAVE empty .txt{progress}{time_sfx}",
         )
 
     def _save_with_shapes(
@@ -294,6 +297,7 @@ class AutoLabelRunner(QRunnable):
         shapes: Sequence[dict[str, Any]],
         index: int,
         total: int,
+        elapsed_ms: float | None = None,
     ) -> None:
         """폴리곤 결과를 저장하고, 버킷 분류/시각화를 수행합니다."""
         scores = [
@@ -325,8 +329,9 @@ class AutoLabelRunner(QRunnable):
                 viz_dir.mkdir(parents=True, exist_ok=True)
                 cv2.imwrite(str(viz_dir / image_path.name), visualised)
 
+        time_sfx = f" time={elapsed_ms:.2f} ms" if elapsed_ms is not None else ""
         self._emit(
             True,
             f"[{image_path.name}] segments={len(shapes)} "
-            f"score(min)={aggregate:.3f} -> bin={bucket} ({index}/{total})",
+            f"score(min)={aggregate:.3f} -> bin={bucket} ({index}/{total}){time_sfx}",
         )
