@@ -27,6 +27,7 @@ class TrainConfig:
         epochs: 학습 epoch 수.
         batch: 배치 크기.
         workdir: 프로세스 작업 디렉터리.
+        resume_from: 이전 학습 체크포인트(.pt) 경로. ``None``이면 새로 학습.
     """
 
     model_path: Path
@@ -36,6 +37,7 @@ class TrainConfig:
     epochs: int
     batch: int
     workdir: Path
+    resume_from: Path | None = None
 
     def build_command(self) -> list[str]:
         """`yolo segment train` 명령 인자 리스트를 생성합니다."""
@@ -46,7 +48,7 @@ class TrainConfig:
             imgsz = str(self.imgsz_w)
             rect_flag = []
 
-        return [
+        command = [
             "yolo",
             "segment",
             "train",
@@ -58,6 +60,10 @@ class TrainConfig:
             *rect_flag,
         ]
 
+        if self.resume_from:
+            command.append(f"resume={self.resume_from}")
+
+        return command
 
 class TrainRunner(QRunnable):
     """YOLO 학습 명령을 실행하고 출력 스트림을 GUI로 전달하는 Qt Runnable."""

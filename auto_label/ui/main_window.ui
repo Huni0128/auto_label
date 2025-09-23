@@ -444,28 +444,62 @@
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="trainPathBtns">
-         <item>
-          <widget class="QPushButton" name="btnTrainModel">
-           <property name="text">
-            <string>모델 선택(.pt)</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnTrainData">
-           <property name="text">
-            <string>dataset.yaml 선택</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="trainControls1">
-         <item>
-          <widget class="QLabel" name="labelImgSz">
-           <property name="text">
+       <layout class="QHBoxLayout" name="trainPathBtns">
+        <item>
+         <widget class="QPushButton" name="btnTrainModel">
+          <property name="text">
+           <string>모델 선택(.pt)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnTrainData">
+          <property name="text">
+           <string>dataset.yaml 선택</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="trainResumeLayout">
+        <item>
+         <widget class="QCheckBox" name="chkTrainResume">
+          <property name="text">
+           <string>이전 학습 이어서 (resume)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnTrainResume">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>체크포인트 선택</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacerTrainResume">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="trainControls1">
+        <item>
+         <widget class="QLabel" name="labelImgSz">
+          <property name="text">
             <string>해상도 (W×H)</string>
            </property>
           </widget>
@@ -555,11 +589,11 @@
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="trainButtons">
-         <item>
-          <widget class="QPushButton" name="btnTrainStart">
-           <property name="text">
-            <string>학습 시작</string>
+       <layout class="QHBoxLayout" name="trainButtons">
+        <item>
+         <widget class="QPushButton" name="btnTrainStart">
+          <property name="text">
+           <string>학습 시작</string>
            </property>
           </widget>
          </item>
@@ -569,14 +603,41 @@
             <string>중지</string>
            </property>
           </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QTextEdit" name="textTrainLog">
-         <property name="readOnly">
-          <bool>true</bool>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QWidget" name="widgetTrainLoss" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>180</height>
+         </size>
+        </property>
+        <layout class="QVBoxLayout" name="layoutTrainLoss">
+         <property name="spacing">
+          <number>6</number>
          </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTextEdit" name="textTrainLog">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
          <property name="placeholderText">
           <string>학습 로그가 표시됩니다...</string>
          </property>
